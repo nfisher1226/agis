@@ -1,0 +1,20 @@
+[package]
+name = "agis"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4"
+libc = "0.2"
+toml = "0.5"
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
