@@ -1,6 +1,7 @@
 use {
     serde::Deserialize,
     std::{
+        collections::HashMap,
         ffi::CString,
         fs,
         io::{Error, ErrorKind},
@@ -8,7 +9,8 @@ use {
 };
 
 mod server;
-pub use server::Server;
+
+pub use server::{Directive, Server};
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -21,6 +23,7 @@ pub struct Config {
     /// The group the server should run as
     pub group: String,
     pub threads: usize,
+    pub vhosts: HashMap<String, Server>,
 }
 
 impl Default for Config {
@@ -31,6 +34,7 @@ impl Default for Config {
             user: String::from("agis"),
             group: String::from("agis"),
             threads: 4,
+            vhosts: HashMap::new(),
         }
     }
 }

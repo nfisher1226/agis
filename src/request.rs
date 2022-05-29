@@ -1,19 +1,17 @@
-use {
-    crate::Config,
-    std::{
-        convert::TryFrom,
-        path::PathBuf,
-        usize,
-        fmt::Display,
-        error::Error,
-        io::{BufRead, BufReader, Read},
-        net::TcpStream,
-    },
+use std::{
+    convert::TryFrom,
+    path::PathBuf,
+    usize,
+    fmt::Display,
+    error::Error,
+    io::{BufRead, BufReader, Read},
+    net::TcpStream,
 };
 
 pub struct Request {
     pub host: String,
     pub path: PathBuf,
+    pub query: Option<String>,
     pub length: usize,
     pub content: Option<Vec<u8>>,
 }
@@ -79,9 +77,15 @@ impl TryFrom<&mut BufReader<&TcpStream>> for Request {
                         Some(buf)
                     },
                 };
+                let (path,query) = if let Some((p,q)) = parts[1].split_once('?') {
+                    (PathBuf::from(p), Some(q.to_string()))
+                } else {
+                    (PathBuf::from(&parts[1]), None)
+                };
                 Ok(Self {
                     host: parts[0].to_string(),
-                    path: PathBuf::from(&parts[1]),
+                    path,
+                    query,
                     length,
                     content,
                 })
