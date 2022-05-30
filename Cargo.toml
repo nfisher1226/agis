@@ -10,6 +10,7 @@ lazy_static = "1.4"
 libc = "0.2"
 tempfile = "3.3"
 toml = "0.5"
+tree_magic_mini = "3.0"
 
 [dependencies.serde]
 version = "1.0"

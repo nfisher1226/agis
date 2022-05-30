@@ -1,59 +1,20 @@
-pub mod config;
-pub mod request;
-pub mod response;
-mod threadpool;
-
+#![warn(clippy::all, clippy::pedantic)]
 use {
-    threadpool::ThreadPool,
-    lazy_static::lazy_static,
+    agis::CONFIG,
     std::{
         env,
-        error::Error,
-        io::{BufReader, Write},
-        process,
-        net::{TcpListener, TcpStream},
+        net::TcpListener,
         num::NonZeroUsize,
+        process,
     },
 };
-
-pub use {
-    config::Config,
-    request::Request,
-};
-
-lazy_static! {
-    static ref CONFIG: Config = match Config::load() {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("Unable to load config: {e}");
-            process::exit(1);
-        }
-    };
-}
-
-fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std::io::Result<()> {
-    if unsafe { libc::setgid((*group).gr_gid) } != 0 {
-        eprintln!("privdrop: Unable to setgid of group: {}", &CONFIG.group);
-        return Err(std::io::Error::last_os_error());
-    }
-    if unsafe { libc::setuid((*user).pw_uid) } != 0 {
-        eprintln!("privdrop: Unable to setuid of user: {}", &CONFIG.user);
-        return Err(std::io::Error::last_os_error());
-    }
-    Ok(())
-}
-
-fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
-    let mut reader = BufReader::new(&stream);
-    let _request = Request::try_from(&mut reader)?;
-    stream.write("Hello world!".as_bytes())?;
-    Ok(())
-}
 
 fn main() -> std::io::Result<()> {
     let uid = unsafe { libc::getuid() };
     if uid != 0 {
-        eprintln!("Toe must be started as the root user.");
+        let prog = env!("CARGO_PKG_NAME");
+        let prog = prog[0..1].to_uppercase() + &prog[1..];
+        eprintln!("{} must be started as the root user.", prog);
         process::exit(1);
     }
     let user = CONFIG.getpwnam()?;
@@ -67,15 +28,15 @@ fn main() -> std::io::Result<()> {
         "Binding to address {} on port {}.",
         CONFIG.address, CONFIG.port
     );
-    privdrop(user, group)?;
+    unsafe { agis::privdrop(user, group)?; }
     println!("Starting up thread pool");
     let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
-    let pool = ThreadPool::new(threads);
+    let pool = agis::ThreadPool::new(threads);
     println!("Priviledges dropped, listening for incoming connections.");
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         pool.execute(|| {
-            if let Err(e) = handle_connection(stream) {
+            if let Err(e) = agis::handle_connection(stream) {
                 eprintln!("{e}");
             }
         });

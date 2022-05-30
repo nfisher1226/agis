@@ -1,66 +1,33 @@
-use std::{
-    convert::TryFrom,
-    path::PathBuf,
-    usize,
-    fmt::Display,
-    error::Error,
-    io::{BufRead, BufReader, Read},
-    net::TcpStream,
+use {
+    crate::error::RequestError,
+    std::{
+        convert::TryFrom,
+        io::{BufRead, BufReader, Read},
+        net::TcpStream,
+        path::PathBuf,
+    },
 };
 
 pub struct Request {
+    /// The fully qualified domain name of the host
     pub host: String,
+    /// The absolute path of the requested document
     pub path: PathBuf,
+    /// The optional query string
     pub query: Option<String>,
+    /// The length of submitted content
     pub length: usize,
+    /// Content to be uploaded
     pub content: Option<Vec<u8>>,
 }
 
-#[derive(Debug)]
-pub enum RequestError {
-    MissingSeparator,
-    MissingField,
-    ExtraField,
-    InvalidContentLength,
-    ReadError(std::io::Error),
-}
-
-impl Display for RequestError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MissingSeparator => write!(f, "Missing separator"),
-            Self::MissingField => write!(f, "Missing field"),
-            Self::ExtraField => write!(f, "Extra field"),
-            Self::InvalidContentLength => write!(f, "Invalid content length"),
-            Self::ReadError(e) => write!(f, "Read error: {}", &e),
-        }
-    }
-}
-
-impl Error for RequestError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::ReadError(e) => Some(e),
-            _ => None,
-        }
-    }
-}
-
-impl From<std::io::Error> for RequestError {
-    fn from(error: std::io::Error) -> Self {
-        Self::ReadError(error)
-    }
-}
-
-impl TryFrom<&mut BufReader<&TcpStream>> for Request {
+impl TryFrom<BufReader<&TcpStream>> for Request {
     type Error = RequestError;
 
-    fn try_from(reader: &mut BufReader<&TcpStream>) -> Result<Self, Self::Error> {
-        let mut header = String::new();
-        reader.read_line(&mut header)?;
-        let parts: Vec<&str> = header
-            .split_whitespace()
-            .collect();
+    fn try_from(mut reader: BufReader<&TcpStream>) -> Result<Self, Self::Error> {
+        let mut request_header = String::new();
+        reader.read_line(&mut request_header)?;
+        let parts: Vec<&str> = request_header.split_whitespace().collect();
         match parts.len() {
             1 => Err(RequestError::MissingSeparator),
             2 => Err(RequestError::MissingField),
@@ -75,9 +42,9 @@ impl TryFrom<&mut BufReader<&TcpStream>> for Request {
                         let mut buf = Vec::with_capacity(length);
                         reader.read_exact(&mut buf)?;
                         Some(buf)
-                    },
+                    }
                 };
-                let (path,query) = if let Some((p,q)) = parts[1].split_once('?') {
+                let (path, query) = if let Some((p, q)) = parts[1].split_once('?') {
                     (PathBuf::from(p), Some(q.to_string()))
                 } else {
                     (PathBuf::from(&parts[1]), None)
@@ -89,13 +56,8 @@ impl TryFrom<&mut BufReader<&TcpStream>> for Request {
                     length,
                     content,
                 })
-            },
+            }
             _ => Err(RequestError::ExtraField),
         }
-    }
-}
-
-impl Request {
-    pub fn respond(&self) {
     }
 }

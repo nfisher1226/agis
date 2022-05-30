@@ -4,6 +4,7 @@ use std::{
     thread,
 };
 
+/// A pool of workerr threads to handle requests
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,
@@ -33,6 +34,7 @@ impl Drop for ThreadPool {
 }
 
 impl ThreadPool {
+    /// Starts up the thread pool
     pub fn new(size: NonZeroUsize) -> Self {
         let (sender, receiver) = mpsc::channel();
         let receiver = Arc::new(Mutex::new(receiver));
@@ -43,6 +45,7 @@ impl ThreadPool {
         Self { workers, sender }
     }
 
+    /// Passes a job off to the worker
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
@@ -52,6 +55,7 @@ impl ThreadPool {
     }
 }
 
+/// A worker thread
 pub struct Worker {
     id: usize,
     thread: Option<thread::JoinHandle<()>>,

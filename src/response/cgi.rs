@@ -1,14 +1,10 @@
 use {
-    crate::{
-        CONFIG,
-        config::Server,
-        response::ServerError,
-    },
+    super::Request,
+    crate::{config::Server, response::ServerError, CONFIG},
     std::{
         path::Path,
         process::{Command, Output},
     },
-    super::Request,
 };
 
 pub struct Cgi {
@@ -22,7 +18,7 @@ pub struct Cgi {
     server_software: String,
 }
 
-impl  Cgi {
+impl Cgi {
     pub fn new(request: &Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
         let base = match request.path.strip_prefix(dir) {
             Ok(b) => b,
@@ -45,7 +41,11 @@ impl  Cgi {
         Ok(Self {
             document_root: format!("{}", server.root.display()),
             query_string,
-            request_uri: format!("{}{}", request.path.display(), request.query.as_ref().unwrap_or(&"".to_string())),
+            request_uri: format!(
+                "{}{}",
+                request.path.display(),
+                request.query.as_ref().unwrap_or(&"".to_string())
+            ),
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name.display()),
             server_name: server.name.clone(),
@@ -56,14 +56,16 @@ impl  Cgi {
 
     pub fn run(&self) -> std::io::Result<Output> {
         Command::new(&self.script_filename)
-            .env("DOCUMENT_ROOT", &self.document_root)
-            .env("QUERY_STRING", &self.query_string)
-            .env("REQUEST_URI", &self.request_uri)
-            .env("SCRIPT_FILENAME", &self.script_filename)
-            .env("SCRIPT_NAME", &self.script_name)
-            .env("SERVER_NAME", &self.server_name)
-            .env("SERVER_PORT", &self.server_port)
-            .env("SERVER_SOFTWARE", &self.server_software)
+            .envs([
+                ("DOCUMENT_ROOT", &self.document_root),
+                ("QUERY_STRING", &self.query_string),
+                ("REQUEST_URI", &self.request_uri),
+                ("SCRIPT_FILENAME", &self.script_filename),
+                ("SCRIPT_NAME", &self.script_name),
+                ("SERVER_NAME", &self.server_name),
+                ("SERVER_PORT", &self.server_port),
+                ("SERVER_SOFTWARE", &self.server_software),
+            ])
             .output()
     }
 }

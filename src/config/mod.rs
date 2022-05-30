@@ -1,3 +1,4 @@
+#![allow(clippy::unsafe_derive_deserialize)]
 use {
     serde::Deserialize,
     std::{
@@ -8,6 +9,7 @@ use {
     },
 };
 
+/// A name based Virtual Host
 mod server;
 
 pub use server::{Directive, Server};
@@ -22,7 +24,9 @@ pub struct Config {
     pub user: String,
     /// The group the server should run as
     pub group: String,
+    /// The number of worker threads to launch
     pub threads: usize,
+    /// The Virtual Hosts to serve
     pub vhosts: HashMap<String, Server>,
 }
 
@@ -40,6 +44,9 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Loads the server configuration from file
+    /// # Errors
+    /// Returns an `io::Error` if the file cannot be read or if it is invalid
     pub fn load() -> Result<Self, Error> {
         let raw = fs::read_to_string("/etc/agis/config.toml")?;
         match toml::from_str(&raw) {
@@ -48,6 +55,9 @@ impl Config {
         }
     }
 
+    /// Gets the `libc::passwd` for the user that the server will run as
+    /// # Errors
+    /// Returns an `io::Error` if unable to create a `CString`
     pub fn getpwnam(&self) -> Result<*mut libc::passwd, std::io::Error> {
         let user = CString::new(self.user.as_bytes())?;
         let uid = unsafe { libc::getpwnam(user.as_ptr()) };
@@ -58,6 +68,9 @@ impl Config {
         Ok(uid)
     }
 
+    /// Gets the `libc::group` for the group that the server will run as
+    /// # Errors
+    /// Returns an `io::Error` if unable to create a `CString`
     pub fn getgrnam(&self) -> Result<*mut libc::group, std::io::Error> {
         let group = CString::new(self.group.as_bytes())?;
         let gid = unsafe { libc::getgrnam(group.as_ptr()) };
@@ -68,4 +81,3 @@ impl Config {
         Ok(gid)
     }
 }
-
