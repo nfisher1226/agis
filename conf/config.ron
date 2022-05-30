@@ -1,0 +1,16 @@
+(
+    address: "0.0.0.0",
+    port: "300",
+    user: "agis",
+    group: "agis",
+    threads: 4,
+    vhosts: {
+        "example.com": (
+            name: "example.com",
+            root: "/srv/spartan",
+            directories: {
+                "/": Allow(true),
+            },
+        ),
+    },
+)

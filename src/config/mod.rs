@@ -1,6 +1,6 @@
 #![allow(clippy::unsafe_derive_deserialize)]
 use {
-    serde::Deserialize,
+    serde::{Deserialize, Serialize},
     std::{
         collections::HashMap,
         ffi::CString,
@@ -14,7 +14,7 @@ mod server;
 
 pub use server::{Directive, Server};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     /// The ip address to bind to
     pub address: String,
@@ -38,7 +38,7 @@ impl Default for Config {
             user: String::from("agis"),
             group: String::from("agis"),
             threads: 4,
-            vhosts: HashMap::new(),
+            vhosts: HashMap::from([(String::from("example.com"), Server::default())]),
         }
     }
 }
@@ -48,10 +48,18 @@ impl Config {
     /// # Errors
     /// Returns an `io::Error` if the file cannot be read or if it is invalid
     pub fn load() -> Result<Self, Error> {
-        let raw = fs::read_to_string("/etc/agis/config.toml")?;
-        match toml::from_str(&raw) {
+        let raw = fs::read_to_string("/etc/agis/config.ron")?;
+        match ron::de::from_str(&raw) {
             Ok(c) => Ok(c),
-            Err(_) => Err(Error::new(ErrorKind::Other, "Error decoding config file")),
+            Err(e) => {
+                let err = format!(
+                    "Error encoding config:\n  code: {:?}\n  position:\n    line: {}\n    column: {}",
+                    e.code,
+                    e.position.line,
+                    e.position.col,
+                );
+                Err(Error::new(ErrorKind::Other, err))
+            },
         }
     }
 

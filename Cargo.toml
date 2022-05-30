@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 lazy_static = "1.4"
 libc = "0.2"
+ron = "0.7"
 tempfile = "3.3"
-toml = "0.5"
 tree_magic_mini = "3.0"
 
 [dependencies.serde]

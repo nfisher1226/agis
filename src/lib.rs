@@ -38,7 +38,7 @@ lazy_static! {
 /// and *group* are valid pointers, which can be reliably gotten by calling the
 /// `Config::getpwnam` and `Config::getgrnam` methods, respectively. Since those
 /// methods will return an error if the user and group referred to in your
-/// config.toml do not exist on the system, this function should not do dangerous
+/// config.ron do not exist on the system, this function should not do dangerous
 /// things.
 pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std::io::Result<()> {
     if libc::setgid((*group).gr_gid) != 0 {

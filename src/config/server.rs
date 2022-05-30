@@ -1,8 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Server {
     /// The domain name of this vserver
     pub name: String,
@@ -12,9 +12,9 @@ pub struct Server {
     pub directories: HashMap<PathBuf, Directive>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub enum Directive {
-    /// Whether to allow or deny access to this path
+    /// Denies access to this path
     Allow(bool),
     /// Causes requests for this path to be served from a different path
     Alias(String),
@@ -22,4 +22,14 @@ pub enum Directive {
     Redirect(PathBuf),
     /// Paths under this directory are Common Gateway Interface programs
     Cgi,
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self {
+            name: String::from("example.com"),
+            root: PathBuf::from("/srv/spartan"),
+            directories: HashMap::from([(PathBuf::from("/"), Directive::Allow(true))]),
+        }
+    }
 }
