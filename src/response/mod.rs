@@ -9,7 +9,8 @@ use {
     },
     cgi::Cgi,
     std::{
-        io::{BufReader, Read},
+        fmt::Write,
+        io::{BufReader, ErrorKind, Read},
         path::PathBuf,
     },
 };
@@ -41,6 +42,30 @@ impl From<Response> for Vec<u8> {
     }
 }
 
+impl From<PathBuf> for Response {
+    fn from(dir: PathBuf) -> Response {
+        let contents = match std::fs::read_dir(&dir) {
+            Ok(c) => c,
+            Err(e) => return Self::ServerError(ServerError::IoError(e)),
+        };
+        let mut body = String::from("# Directory listing\n=> .. Parent\n");
+        for entry in contents {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(e) => return Self::ServerError(ServerError::IoError(e)),
+            };
+            let entry = match entry.file_name().to_os_string().to_str() {
+                Some(e) => e.to_string(),
+                None => return Self::ServerError(ServerError::IoError(std::io::Error::new(ErrorKind::Other, "Invalid pathname"))),
+            };
+            if let Err(e) = writeln!(body, "=> {}", entry) {
+                return Self::ServerError(ServerError::IoError(std::io::Error::new(ErrorKind::Other, e)));
+            }
+        }
+        Self::Success { mimetype: String::from("text/gemini"), body: body.into_bytes() }
+    }
+}
+
 impl From<Request> for Response {
     fn from(request: Request) -> Self {
         let server = match CONFIG.vhosts.get(&request.host) {
@@ -65,7 +90,9 @@ impl From<Request> for Response {
                         };
                         return Self::from(r);
                     }
-                    Directive::Redirect(path) => return Self::Redirect(path.clone()),
+                    Directive::Redirect(path) => if request.path.as_path() == dir.as_path() {
+                        return Self::Redirect(path.clone());
+                    },
                     Directive::Cgi => {
                         let cgi = match Cgi::new(&request, server, dir) {
                             Ok(c) => c,
@@ -92,6 +119,13 @@ impl From<Request> for Response {
         }
         let mut path = server.root.clone();
         path.push(request.path);
+        if path.is_dir() {
+            path.push("index.gmi");
+            if !path.exists() {
+                _ = path.pop();
+                return path.into();
+            }
+        }
         let fd = match std::fs::File::open(&path) {
             Ok(f) => f,
             Err(e) => return Self::ServerError(ServerError::IoError(e)),

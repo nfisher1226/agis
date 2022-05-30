@@ -10,4 +10,4 @@ functional.
 - [x] CGI
 - [x] Redirects
 - [x] Aliases
-- [ ] indexes
+- [x] indexes
