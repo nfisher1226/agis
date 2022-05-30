@@ -5,8 +5,9 @@ functional.
 
 ## Planned Features
 - [x] Multithreaded worker pool
-- [ ] Static files
+- [x] Static files
 - [x] Virtual hosts (name based)
 - [x] CGI
 - [x] Redirects
 - [x] Aliases
+- [ ] indexes
