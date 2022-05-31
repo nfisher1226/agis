@@ -118,7 +118,14 @@ impl From<Request> for Response {
             }
         }
         let mut path = server.root.clone();
-        path.push(request.path);
+        let request_base = match request.path.strip_prefix("/") {
+            Ok(p) => p,
+            Err(e) => {
+                let err = std::io::Error::new(ErrorKind::Other, e);
+                return Self::ServerError(ServerError::IoError(err));
+            },
+        };
+        path.push(request_base);
         if path.is_dir() {
             path.push("index.gmi");
             if !path.exists() {
