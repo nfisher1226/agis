@@ -1,15 +1,32 @@
 (
+    // The ip address to bind to
     address: "0.0.0.0",
+    // The port to bind to
     port: "300",
+    // The user the server will run as
     user: "agis",
+    // The group the server will run as
     group: "agis",
+    // The number of worker threads
     threads: 4,
+    // A hashmap of name based virtual hosts
     vhosts: {
         "example.com": (
+	    // The name for which to accept requests for this server.
+	    // For local developnment and testing use "localhost".
             name: "example.com",
+	    // The path to where this server's files are located
             root: "/srv/spartan",
+	    // Directives for the document tree
             directories: {
+	        // Allow this path and all under it
                 "/": Allow(true),
+		// Serve a different path for this request
+		// "/old": Alias("/new"),
+		// Tell the client to redirect to this path
+		// "/a": Redirect("/b"),
+		// Cgi scripts
+		// "/cgi-bin": Cgi,
             },
         ),
     },
