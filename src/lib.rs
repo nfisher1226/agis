@@ -56,8 +56,16 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std:
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let reader = BufReader::new(&stream);
     let request = Request::try_from(reader)?;
-    let response: Vec<u8> = Response::from(request).into();
+    println!(
+        "  Request:\n    domain: {}\n    path: {}\n    query: {}\n    length: {}",
+        &request.host,
+        request.path.display(),
+        request.query.as_ref().unwrap_or(&"none".to_string()),
+        &request.length
+    );
+    let response = Response::from(request);
+    println!("  {}", response);
     let mut writer = BufWriter::new(&mut stream);
-    writer.write_all(&response)?;
+    writer.write_all(&Vec::from(response))?;
     Ok(())
 }

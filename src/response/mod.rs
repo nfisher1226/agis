@@ -9,7 +9,7 @@ use {
     },
     cgi::Cgi,
     std::{
-        fmt::Write,
+        fmt::{Display, Write},
         io::{BufReader, ErrorKind, Read},
         path::PathBuf,
     },
@@ -25,6 +25,19 @@ pub enum Response {
     ClientError(RequestError),
     /// The server encountered an error processing a valid request
     ServerError(ServerError),
+}
+
+impl Display for Response {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Success { mimetype, body: _ } => {
+                write!(f, "Response: Success {}", mimetype)
+            }
+            Self::Redirect(path) => write!(f, "Response: Redirect {}", path.display()),
+            Self::ClientError(e) => write!(f, "Response: ClientError {}", &e),
+            Self::ServerError(e) => write!(f, "Response: ServerError {}", &e),
+        }
+    }
 }
 
 impl From<Response> for Vec<u8> {

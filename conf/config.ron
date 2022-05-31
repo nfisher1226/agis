@@ -26,7 +26,7 @@
                 // Tell the client to redirect to this path
                 // "/a": Redirect("/b"),
                 // Cgi scripts
-                // "/cgi-bin": Cgi,
+                "/cgi-bin": Cgi,
             },
         ),
     },
