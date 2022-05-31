@@ -12,21 +12,21 @@
     // A hashmap of name based virtual hosts
     vhosts: {
         "example.com": (
-	    // The name for which to accept requests for this server.
-	    // For local developnment and testing use "localhost".
+            // The name for which to accept requests for this server.
+            // For local developnment and testing use "localhost".
             name: "example.com",
-	    // The path to where this server's files are located
+            // The path to where this server's files are located
             root: "/srv/spartan",
-	    // Directives for the document tree
+            // Directives for the document tree
             directories: {
 	        // Allow this path and all under it
                 "/": Allow(true),
-		// Serve a different path for this request
-		// "/old": Alias("/new"),
-		// Tell the client to redirect to this path
-		// "/a": Redirect("/b"),
-		// Cgi scripts
-		// "/cgi-bin": Cgi,
+                // Serve a different path for this request
+                // "/old": Alias("/new"),
+                // Tell the client to redirect to this path
+                // "/a": Redirect("/b"),
+                // Cgi scripts
+                // "/cgi-bin": Cgi,
             },
         ),
     },

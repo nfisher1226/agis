@@ -1,0 +1,19 @@
+[Unit]
+Description=Agis spartan protocol server
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/spartan/
+ExecStart=agis
+
+Restart=always
+RestartSec=1
+
+StandardOutput=syslog
+StandardError=syslog
+# adds a syslog identifier so you can have these logs filtered into
+# a separate file
+SyslogIdentifier=spartan
+
+[Install]
+WantedBy=multi-user.target
