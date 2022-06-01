@@ -6,6 +6,7 @@ use {
         ffi::CString,
         fs,
         io::{Error, ErrorKind},
+        path::PathBuf,
     },
 };
 
@@ -26,6 +27,10 @@ pub struct Config {
     pub group: String,
     /// The number of worker threads to launch
     pub threads: usize,
+    /// Access log
+    pub access_log: Option<PathBuf>,
+    /// Error log
+    pub error_log: Option<PathBuf>,
     /// The Virtual Hosts to serve
     pub vhosts: HashMap<String, Server>,
 }
@@ -38,6 +43,8 @@ impl Default for Config {
             user: String::from("agis"),
             group: String::from("agis"),
             threads: 4,
+            access_log: Some(PathBuf::from("/var/log/agis/access.log")),
+            error_log: Some(PathBuf::from("/var/log/agis/error.log")),
             vhosts: HashMap::from([(String::from("example.com"), Server::default())]),
         }
     }

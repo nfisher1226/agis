@@ -1,0 +1,7 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+authors = ["Nathan Fisher <jeang3nie@hitchhiker-linux.org>"]
+edition = "2021"
+
+[dependencies]

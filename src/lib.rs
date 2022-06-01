@@ -2,6 +2,8 @@
 pub mod config;
 /// Possible errors
 pub mod error;
+/// Log access and errors
+pub mod log;
 /// Parses requests
 pub mod request;
 /// Prepares a resonse
@@ -10,6 +12,7 @@ pub mod response;
 pub mod threadpool;
 
 use {
+    log::{Log, LogError},
     lazy_static::lazy_static,
     response::Response,
     std::{
@@ -55,16 +58,16 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std:
 /// Handles the connection
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let reader = BufReader::new(&stream);
-    let request = Request::try_from(reader)?;
-    println!(
-        "  Request:\n    domain: {}\n    path: {}\n    query: {}\n    length: {}",
-        &request.host,
-        request.path.display(),
-        request.query.as_ref().unwrap_or(&"none".to_string()),
-        &request.length
-    );
+    let request = match Request::try_from(reader) {
+        Ok(r) => r,
+        Err(e) => {
+            e.log_err()?;
+            return Err(e.into());
+        }
+    };
+    request.log()?;
     let response = Response::from(request);
-    println!("  {}", response);
+    response.log()?;
     let mut writer = BufWriter::new(&mut stream);
     writer.write_all(&Vec::from(response))?;
     Ok(())
