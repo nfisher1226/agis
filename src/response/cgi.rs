@@ -32,7 +32,7 @@ impl Cgi {
         let mut script_name = dir.to_path_buf();
         script_name.push(script_base);
         let mut script_filename = server.root.clone();
-        script_filename.push(&script_name);
+        script_filename.push(&script_name.strip_prefix("/").unwrap());
         let query_string = match &request.query {
             Some(q) => q.to_string(),
             None => String::new(),
