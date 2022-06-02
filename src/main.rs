@@ -1,12 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 use {
     agis::CONFIG,
-    std::{
-        env,
-        net::TcpListener,
-        num::NonZeroUsize,
-        process,
-    },
+    std::{env, net::TcpListener, num::NonZeroUsize, process},
 };
 
 fn main() -> std::io::Result<()> {
@@ -19,6 +14,9 @@ fn main() -> std::io::Result<()> {
     }
     let user = CONFIG.getpwnam()?;
     let group = CONFIG.getgrnam()?;
+    unsafe {
+        agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
+    }
     //if CONFIG.chroot {
     //    unix::fs::chroot(&CONFIG.root)?;
     //}
@@ -28,7 +26,9 @@ fn main() -> std::io::Result<()> {
         "Binding to address {} on port {}.",
         CONFIG.address, CONFIG.port
     );
-    unsafe { agis::privdrop(user, group)?; }
+    unsafe {
+        agis::privdrop(user, group)?;
+    }
     println!("Starting up thread pool");
     let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
     let pool = agis::ThreadPool::new(threads);

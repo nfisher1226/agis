@@ -1,3 +1,7 @@
+use std::{ffi::CString, os::unix::prelude::OsStrExt};
+
+use log::LogError;
+
 /// Server configuration
 pub mod config;
 /// Possible errors
@@ -12,8 +16,8 @@ pub mod response;
 pub mod threadpool;
 
 use {
-    log::{Log, LogError},
     lazy_static::lazy_static,
+    log::Log,
     response::Response,
     std::{
         error::Error,
@@ -55,6 +59,44 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std:
     Ok(())
 }
 
+pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), std::io::Error> {
+    if let Some(log) = CONFIG.access_log.as_ref() {
+        if let Some(parent) = log.parent() {
+            if !parent.exists() {
+                println!("Creating log directory");
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+        if !log.exists() {
+            println!("Creating access log");
+            {
+                std::fs::File::create(&log)?;
+            }
+            let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
+            println!("Setting access log permissions");
+            _ = libc::chown(logstr.as_ptr(), uid, gid);
+        }
+    }
+    if let Some(log) = CONFIG.error_log.as_ref() {
+        if let Some(parent) = log.parent() {
+            if !parent.exists() {
+                println!("Creating log directory");
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+        if !log.exists() {
+            println!("Creating error log");
+            {
+                std::fs::File::create(&log)?;
+            }
+            let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
+            println!("Setting error log permissions");
+            _ = libc::chown(logstr.as_ptr(), uid, gid);
+        }
+    }
+    Ok(())
+}
+
 /// Handles the connection
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let reader = BufReader::new(&stream);
@@ -65,8 +107,16 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
             return Err(e.into());
         }
     };
-    request.log()?;
+    let msg = request.to_string();
     let response = Response::from(request);
+    match response {
+        Response::Success {
+            mimetype: _,
+            body: _,
+        }
+        | Response::Redirect(_) => msg.log()?,
+        Response::ClientError(_) | Response::ServerError(_) => msg.log_err()?,
+    }
     response.log()?;
     let mut writer = BufWriter::new(&mut stream);
     writer.write_all(&Vec::from(response))?;

@@ -66,7 +66,7 @@ impl Config {
                     e.position.col,
                 );
                 Err(Error::new(ErrorKind::Other, err))
-            },
+            }
         }
     }
 

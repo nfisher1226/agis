@@ -31,11 +31,11 @@ impl Display for Response {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Success { mimetype, body: _ } => {
-                write!(f, "Response: Success {}", mimetype)
+                write!(f, "Response::Success({})", mimetype)
             }
-            Self::Redirect(path) => write!(f, "Response: Redirect {}", path.display()),
-            Self::ClientError(e) => write!(f, "Response: ClientError {}", &e),
-            Self::ServerError(e) => write!(f, "Response: ServerError {}", &e),
+            Self::Redirect(path) => write!(f, "Response::Redirect({})", path.display()),
+            Self::ClientError(e) => write!(f, "Response::ClientError({})", &e),
+            Self::ServerError(e) => write!(f, "Response::ServerError({})", &e),
         }
     }
 }
@@ -69,13 +69,24 @@ impl From<PathBuf> for Response {
             };
             let entry = match entry.file_name().to_os_string().to_str() {
                 Some(e) => e.to_string(),
-                None => return Self::ServerError(ServerError::IoError(std::io::Error::new(ErrorKind::Other, "Invalid pathname"))),
+                None => {
+                    return Self::ServerError(ServerError::IoError(std::io::Error::new(
+                        ErrorKind::Other,
+                        "Invalid pathname",
+                    )))
+                }
             };
             if let Err(e) = writeln!(body, "=> {}", entry) {
-                return Self::ServerError(ServerError::IoError(std::io::Error::new(ErrorKind::Other, e)));
+                return Self::ServerError(ServerError::IoError(std::io::Error::new(
+                    ErrorKind::Other,
+                    e,
+                )));
             }
         }
-        Self::Success { mimetype: String::from("text/gemini"), body: body.into_bytes() }
+        Self::Success {
+            mimetype: String::from("text/gemini"),
+            body: body.into_bytes(),
+        }
     }
 }
 
@@ -103,9 +114,11 @@ impl From<Request> for Response {
                         };
                         return Self::from(r);
                     }
-                    Directive::Redirect(path) => if request.path.as_path() == dir.as_path() {
-                        return Self::Redirect(path.clone());
-                    },
+                    Directive::Redirect(path) => {
+                        if request.path.as_path() == dir.as_path() {
+                            return Self::Redirect(path.clone());
+                        }
+                    }
                     Directive::Cgi => {
                         let cgi = match Cgi::new(&request, server, dir) {
                             Ok(c) => c,
@@ -136,7 +149,7 @@ impl From<Request> for Response {
             Err(e) => {
                 let err = std::io::Error::new(ErrorKind::Other, e);
                 return Self::ServerError(ServerError::IoError(err));
-            },
+            }
         };
         path.push(request_base);
         if path.is_dir() {

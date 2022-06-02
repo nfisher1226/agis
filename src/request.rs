@@ -2,12 +2,14 @@ use {
     crate::error::RequestError,
     std::{
         convert::TryFrom,
+        fmt::Display,
         io::{BufRead, BufReader, Read},
         net::TcpStream,
         path::PathBuf,
     },
 };
 
+#[derive(Clone)]
 pub struct Request {
     /// The fully qualified domain name of the host
     pub host: String,
@@ -19,6 +21,19 @@ pub struct Request {
     pub length: usize,
     /// Content to be uploaded
     pub content: Option<Vec<u8>>,
+}
+
+impl Display for Request {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Request: {{ host: {}; path: {}; query: {}; length: {}; }}",
+            &self.host,
+            self.path.display(),
+            self.query.as_ref().unwrap_or(&String::from("none")),
+            self.length,
+        )
+    }
 }
 
 impl TryFrom<BufReader<&TcpStream>> for Request {

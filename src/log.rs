@@ -1,8 +1,9 @@
-use std::io::BufWriter;
+use std::fmt::Display;
 
 use {
     crate::CONFIG,
-    std::io::Write,
+    chrono::{DateTime, Utc},
+    std::io::{BufWriter, Write},
 };
 
 pub trait Log {
@@ -17,22 +18,15 @@ pub trait LogError {
     fn log_err(&self) -> Result<(), Self::Error>;
 }
 
-impl Log for crate::Request {
+impl Log for std::string::String {
     type Error = std::io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
-        let msg = format!(
-            "  Request:\n    host: {}\n    path: {}\n    query: {}\n    length: {}\n",
-            &self.host,
-            self.path.display(),
-            self.query.as_ref().unwrap_or(&String::from("none")),
-            self.length,
-        );
+        let dt: DateTime<Utc> = Utc::now();
+        let msg = format!("{} {};\n", dt.to_rfc3339(), self);
         match CONFIG.access_log.as_ref() {
             Some(log) => {
-                let fd = std::fs::OpenOptions::new()
-                    .append(true)
-                    .open(log)?;
+                let fd = std::fs::OpenOptions::new().append(true).open(log)?;
                 let mut writer = BufWriter::new(fd);
                 writer.write_all(msg.as_bytes())?;
             }
@@ -46,55 +40,55 @@ impl Log for crate::Response {
     type Error = std::io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
+        let dt: DateTime<Utc> = Utc::now();
         match self {
-            Self::Success { mimetype: _, body: _ } |
-            Self::Redirect(_) => {
+            Self::Success {
+                mimetype: _,
+                body: _,
+            }
+            | Self::Redirect(_) => {
+                let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.access_log.as_ref() {
                     Some(log) => {
-                        let msg = format!("  {}\n", self);
-                        let fd = std::fs::OpenOptions::new()
-                            .append(true)
-                            .open(log)?;
+                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
-                    },
-                    None => println!("  {}", self),
+                    }
+                    None => print!("{}", msg),
                 }
-            },
-            Self::ClientError(_) |
-            Self::ServerError(_) => {
+            }
+            Self::ClientError(_) | Self::ServerError(_) => {
+                let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.error_log.as_ref() {
                     Some(log) => {
-                        let msg = format!("  {}\n", self);
-                        let fd = std::fs::OpenOptions::new()
-                            .append(true)
-                            .open(log)?;
+                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
-                    },
-                    None => println!("  {}", self),
+                    }
+                    None => print!("{}", msg),
                 }
-            },
+            }
         }
         Ok(())
     }
 }
 
 impl<T> LogError for T
-where T: std::error::Error
+where
+    T: Display,
 {
     type Error = std::io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
+        let dt: DateTime<Utc> = Utc::now();
+        let msg = format!("{} {}\n", dt.to_rfc3339(), self);
         match CONFIG.error_log.as_ref() {
             Some(l) => {
-                let fd = std::fs::OpenOptions::new()
-                    .append(true)
-                    .open(l)?;
+                let fd = std::fs::OpenOptions::new().append(true).open(l)?;
                 let mut writer = BufWriter::new(fd);
-                writer.write_all(self.to_string().as_bytes())?;
-            },
-            None => eprint!("{}", self),
+                writer.write_all(msg.as_bytes())?;
+            }
+            None => eprint!("{}", msg),
         }
         Ok(())
     }
