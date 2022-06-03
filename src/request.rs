@@ -10,6 +10,7 @@ use {
 };
 
 #[derive(Clone)]
+/// Represents a valid request
 pub struct Request {
     /// The fully qualified domain name of the host
     pub host: String,

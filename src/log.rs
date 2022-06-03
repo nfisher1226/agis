@@ -6,15 +6,19 @@ use {
     std::io::{BufWriter, Write},
 };
 
+/// Logging access to the server
 pub trait Log {
     type Error;
 
+    /// Writes server access to either the configured access log or stdout
     fn log(&self) -> Result<(), Self::Error>;
 }
 
+/// Logging server errors
 pub trait LogError {
     type Error;
 
+    /// Writes errors to either the configured error log or stderr
     fn log_err(&self) -> Result<(), Self::Error>;
 }
 

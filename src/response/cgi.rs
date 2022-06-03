@@ -1,12 +1,34 @@
+//! This module handles CGI (Common Gateway Interface) requests. The spec is a
+//! subset of the CGI 1.1 spec, with http specific environment variables omitted
+//! and the addition of the ability to handle a request body saved to a temporary
+//! file. The CGI environment variables which are passed to the program are as
+//! follows:
+//! - DOCUMENT_ROOT is the document root of the virtual host serving this request.
+//! - QUERY_STRING is the portion of the request following the '?' character,
+//!   useful for setting additional variables.
+//! - REQUEST_URI is the interpreted pathname of the requested document or CGI
+//!   (relative to the document root).
+//! - SCRIPT_FILENAME is the full filesystem path to the CGI program
+//! - SCRIPT_NAME is the interpreted pathname of the current CGI (relative to
+//!   the document root).
+//! - SERVER_NAME is the server's fully qualified domain name.
+//! - SERVER_SOFTWARE is the name and version string of this server.
+//! - REQUEST_BODY is the path to a temporary file which contains the request
+//!   body. This variable will be an empty string if there was no request body.
+//!   The file that it points to may contain any arbitrary data and should as
+//!   such be treated as untrusted input.
 use {
     super::Request,
     crate::{config::Server, response::ServerError, CONFIG},
     std::{
+        fs::File,
+        io::Write,
         path::Path,
         process::{Command, Output},
     },
 };
 
+/// The data to be passed into the CGI environment
 pub struct Cgi {
     document_root: String,
     query_string: String,
@@ -16,10 +38,12 @@ pub struct Cgi {
     server_name: String,
     server_port: String,
     server_software: String,
+    body: Option<Vec<u8>>,
 }
 
 impl Cgi {
-    pub fn new(request: &Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
+    /// Constructs the Cgi struct from a `Request`, `Server` and a path
+    pub fn new(request: Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
         let base = match request.path.strip_prefix(dir) {
             Ok(b) => b,
             Err(_) => return Err(ServerError::CgiError),
@@ -51,10 +75,22 @@ impl Cgi {
             server_name: server.name.clone(),
             server_port: CONFIG.port.clone(),
             server_software,
+            body: request.content,
         })
     }
 
+    /// Runs the CGI program and returns it's output
     pub fn run(&self) -> std::io::Result<Output> {
+        let dir = tempfile::tempdir()?;
+        let tmpfile = match self.body.as_ref() {
+            Some(body) => {
+                let path = dir.path().join("body");
+                let mut fd = File::create(&path)?;
+                fd.write_all(body)?;
+                format!("{}", path.display())
+            },
+            None => String::new(),
+        };
         Command::new(&self.script_filename)
             .envs([
                 ("DOCUMENT_ROOT", &self.document_root),
@@ -65,6 +101,7 @@ impl Cgi {
                 ("SERVER_NAME", &self.server_name),
                 ("SERVER_PORT", &self.server_port),
                 ("SERVER_SOFTWARE", &self.server_software),
+                ("REQUEST_BODY", &tmpfile),
             ])
             .output()
     }

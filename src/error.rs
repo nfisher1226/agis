@@ -2,6 +2,7 @@
 use std::{error::Error, fmt::Display};
 
 #[derive(Debug)]
+/// Errors which might occur while parsing a request
 pub enum RequestError {
     /// The request header did not have a CrLf termination
     MissingSeparator,
@@ -43,6 +44,7 @@ impl From<std::io::Error> for RequestError {
 }
 
 #[derive(Debug)]
+/// Errors which might occur while processing a valid request into a response
 pub enum ServerError {
     /// The requested resource does not exist
     NotFound,

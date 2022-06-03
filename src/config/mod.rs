@@ -1,6 +1,6 @@
 #![allow(clippy::unsafe_derive_deserialize)]
 use {
-    serde::{Deserialize, Serialize},
+    serde::Deserialize,
     std::{
         collections::HashMap,
         ffi::CString,
@@ -15,7 +15,8 @@ mod server;
 
 pub use server::{Directive, Server};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
+/// Configuration variables for the server
 pub struct Config {
     /// The ip address to bind to
     pub address: String,

@@ -1,5 +1,5 @@
+#![doc = include_str!("../README.md")]
 use std::{ffi::CString, os::unix::prelude::OsStrExt};
-
 use log::LogError;
 
 /// Server configuration

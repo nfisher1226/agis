@@ -1,4 +1,4 @@
-mod cgi;
+pub mod cgi;
 
 use {
     crate::{
@@ -115,7 +115,7 @@ impl From<Request> for Response {
                         path.push(children);
                         let r = Request {
                             host: request.host,
-                            path: PathBuf::from(path),
+                            path,
                             query: request.query,
                             length: request.length,
                             content: request.content,
@@ -128,7 +128,7 @@ impl From<Request> for Response {
                         }
                     }
                     Directive::Cgi => {
-                        let cgi = match Cgi::new(&request, server, dir) {
+                        let cgi = match Cgi::new(request, server, dir) {
                             Ok(c) => c,
                             Err(e) => return Self::ServerError(e),
                         };

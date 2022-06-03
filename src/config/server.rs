@@ -1,8 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
+use serde::Deserialize;
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
+/// A name-based virtual host
 pub struct Server {
     /// The domain name of this vserver
     pub name: String,
@@ -12,7 +12,8 @@ pub struct Server {
     pub directories: HashMap<PathBuf, Directive>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
+/// Path specific directives
 pub enum Directive {
     /// Denies access to this path
     Allow(bool),
