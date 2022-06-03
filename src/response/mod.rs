@@ -105,6 +105,14 @@ impl From<Request> for Response {
                         }
                     }
                     Directive::Alias(path) => {
+                        let children = request.path.strip_prefix(dir).unwrap();
+                        let children = if children.starts_with("/") {
+                            children.strip_prefix("/").unwrap()
+                        } else {
+                            children
+                        };
+                        let mut path = PathBuf::from(path);
+                        path.push(children);
                         let r = Request {
                             host: request.host,
                             path: PathBuf::from(path),
