@@ -1,7 +1,13 @@
 [package]
 name = "agis"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+description = "A Spartan protocol server"
+authors = ["Nathan Fisher"]
+repository = "https://codeberg.org/jeang3nie/agis"
+keywords = ["networking", "spartan"]
+categories = ["network-programming"]
+lecense = "GPL-3.0-or-later"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
