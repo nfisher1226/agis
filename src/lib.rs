@@ -60,7 +60,6 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std:
 }
 
 /// Initializes the access and error logs if they don't exist
-///
 /// # Safety
 /// This function uses a number of unsafe libc interfaces. It is only called at
 /// startup time, and the unsafe code only runs if either log is missing.

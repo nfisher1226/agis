@@ -1,9 +1,7 @@
-use std::fmt::Display;
-
 use {
     crate::CONFIG,
     chrono::{DateTime, Utc},
-    std::io::{BufWriter, Write},
+    std::{fmt::Display, io::{BufWriter, Write}, fs::OpenOptions},
 };
 
 /// Logging access to the server
@@ -30,7 +28,7 @@ impl Log for std::string::String {
         let msg = format!("{} {};\n", dt.to_rfc3339(), self);
         match CONFIG.access_log.as_ref() {
             Some(log) => {
-                let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                let fd = OpenOptions::new().append(true).open(log)?;
                 let mut writer = BufWriter::new(fd);
                 writer.write_all(msg.as_bytes())?;
             }
@@ -54,7 +52,7 @@ impl Log for crate::Response {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.access_log.as_ref() {
                     Some(log) => {
-                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                        let fd = OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
                     }
@@ -65,7 +63,7 @@ impl Log for crate::Response {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.error_log.as_ref() {
                     Some(log) => {
-                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                        let fd = OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
                     }
@@ -87,8 +85,8 @@ where
         let dt: DateTime<Utc> = Utc::now();
         let msg = format!("{} {}\n", dt.to_rfc3339(), self);
         match CONFIG.error_log.as_ref() {
-            Some(l) => {
-                let fd = std::fs::OpenOptions::new().append(true).open(l)?;
+            Some(log) => {
+                let fd = OpenOptions::new().append(true).open(log)?;
                 let mut writer = BufWriter::new(fd);
                 writer.write_all(msg.as_bytes())?;
             }

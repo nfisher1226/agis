@@ -2,7 +2,7 @@ use {
     crate::error::RequestError,
     std::{
         convert::TryFrom,
-        fmt::Display,
+        fmt,
         io::{BufRead, BufReader, Read},
         net::TcpStream,
         path::PathBuf,
@@ -24,8 +24,8 @@ pub struct Request {
     pub content: Option<Vec<u8>>,
 }
 
-impl Display for Request {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Request {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "Request: {{ host: {}; path: {}; query: {}; length: {}; }}",
