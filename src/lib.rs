@@ -1,7 +1,4 @@
 #![doc = include_str!("../README.md")]
-use log::LogError;
-use std::{ffi::CString, os::unix::prelude::OsStrExt};
-
 /// Server configuration
 pub mod config;
 /// Possible errors
@@ -17,12 +14,14 @@ pub mod threadpool;
 
 use {
     lazy_static::lazy_static,
-    log::Log,
+    log::{Log, LogError},
     response::Response,
     std::{
-        error::Error,
-        io::{BufReader, BufWriter, Write},
+        ffi::CString,
+        fs::{self, File},
+        io::{self, BufReader, BufWriter, Write},
         net::TcpStream,
+        os::unix::prelude::OsStrExt,
         process,
     },
 };
@@ -47,7 +46,7 @@ lazy_static! {
 /// methods will return an error if the user and group referred to in your
 /// config.ron do not exist on the system, this function should not do dangerous
 /// things.
-pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std::io::Result<()> {
+pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> io::Result<()> {
     if libc::setgid((*group).gr_gid) != 0 {
         eprintln!("privdrop: Unable to setgid of group: {}", &CONFIG.group);
         return Err(std::io::Error::last_os_error());
@@ -63,18 +62,18 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> std:
 /// # Safety
 /// This function uses a number of unsafe libc interfaces. It is only called at
 /// startup time, and the unsafe code only runs if either log is missing.
-pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), std::io::Error> {
+pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Error> {
     if let Some(log) = CONFIG.access_log.as_ref() {
         if let Some(parent) = log.parent() {
             if !parent.exists() {
                 println!("Creating log directory");
-                std::fs::create_dir_all(parent)?;
+                fs::create_dir_all(parent)?;
             }
         }
         if !log.exists() {
             println!("Creating access log");
             {
-                std::fs::File::create(&log)?;
+                File::create(&log)?;
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting access log permissions");
@@ -85,13 +84,13 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), std::i
         if let Some(parent) = log.parent() {
             if !parent.exists() {
                 println!("Creating log directory");
-                std::fs::create_dir_all(parent)?;
+                fs::create_dir_all(parent)?;
             }
         }
         if !log.exists() {
             println!("Creating error log");
             {
-                std::fs::File::create(&log)?;
+                File::create(&log)?;
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting error log permissions");
@@ -102,7 +101,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), std::i
 }
 
 /// Handles the connection
-pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
+pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     let reader = BufReader::new(&stream);
     let (request, response) = match Request::try_from(reader) {
         Ok(request) => (request.to_string(), Response::from(request)),
