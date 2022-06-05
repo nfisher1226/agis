@@ -34,6 +34,12 @@ impl From<ServerError> for Response {
     }
 }
 
+impl From<RequestError> for Response {
+    fn from(err: RequestError) -> Self {
+        Self::ClientError(err)
+    }
+}
+
 impl fmt::Display for Response {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
