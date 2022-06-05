@@ -1,9 +1,11 @@
-use std::fmt::Display;
-
 use {
     crate::CONFIG,
     chrono::{DateTime, Utc},
-    std::io::{BufWriter, Write},
+    std::{
+        fmt::Display,
+        fs::OpenOptions,
+        io::{self, BufWriter, Write},
+    },
 };
 
 /// Logging access to the server
@@ -23,14 +25,14 @@ pub trait LogError {
 }
 
 impl Log for std::string::String {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();
         let msg = format!("{} {};\n", dt.to_rfc3339(), self);
         match CONFIG.access_log.as_ref() {
             Some(log) => {
-                let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                let fd = OpenOptions::new().append(true).open(log)?;
                 let mut writer = BufWriter::new(fd);
                 writer.write_all(msg.as_bytes())?;
             }
@@ -41,7 +43,7 @@ impl Log for std::string::String {
 }
 
 impl Log for crate::Response {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();
@@ -54,7 +56,7 @@ impl Log for crate::Response {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.access_log.as_ref() {
                     Some(log) => {
-                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                        let fd = OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
                     }
@@ -65,7 +67,7 @@ impl Log for crate::Response {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.error_log.as_ref() {
                     Some(log) => {
-                        let fd = std::fs::OpenOptions::new().append(true).open(log)?;
+                        let fd = OpenOptions::new().append(true).open(log)?;
                         let mut writer = BufWriter::new(fd);
                         writer.write_all(msg.as_bytes())?;
                     }
@@ -81,14 +83,14 @@ impl<T> LogError for T
 where
     T: Display,
 {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();
         let msg = format!("{} {}\n", dt.to_rfc3339(), self);
         match CONFIG.error_log.as_ref() {
-            Some(l) => {
-                let fd = std::fs::OpenOptions::new().append(true).open(l)?;
+            Some(log) => {
+                let fd = OpenOptions::new().append(true).open(log)?;
                 let mut writer = BufWriter::new(fd);
                 writer.write_all(msg.as_bytes())?;
             }

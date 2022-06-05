@@ -14,19 +14,13 @@ fn main() -> std::io::Result<()> {
     }
     let user = CONFIG.getpwnam()?;
     let group = CONFIG.getgrnam()?;
-    unsafe {
-        agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
-    }
-    //if CONFIG.chroot {
-    //    unix::fs::chroot(&CONFIG.root)?;
-    //}
-    env::set_current_dir("/")?;
     let listener = TcpListener::bind(format!("{}:{}", CONFIG.address, CONFIG.port))?;
     println!(
         "Binding to address {} on port {}.",
         CONFIG.address, CONFIG.port
     );
     unsafe {
+        agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;
     }
     println!("Starting up thread pool");

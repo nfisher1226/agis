@@ -9,8 +9,9 @@ use {
     },
     cgi::Cgi,
     std::{
-        fmt::{Display, Write},
-        io::{BufReader, ErrorKind, Read},
+        fmt::{self, Write},
+        fs::{self, File},
+        io::{self, BufReader, ErrorKind, Read},
         path::PathBuf,
     },
 };
@@ -27,8 +28,20 @@ pub enum Response {
     ServerError(ServerError),
 }
 
-impl Display for Response {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl From<ServerError> for Response {
+    fn from(err: ServerError) -> Self {
+        Self::ServerError(err)
+    }
+}
+
+impl From<RequestError> for Response {
+    fn from(err: RequestError) -> Self {
+        Self::ClientError(err)
+    }
+}
+
+impl fmt::Display for Response {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Success { mimetype, body: _ } => {
                 write!(f, "Response::Success({})", mimetype)
@@ -57,30 +70,26 @@ impl From<Response> for Vec<u8> {
 
 impl From<PathBuf> for Response {
     fn from(dir: PathBuf) -> Response {
-        let contents = match std::fs::read_dir(&dir) {
+        let contents = match fs::read_dir(&dir) {
             Ok(c) => c,
-            Err(e) => return Self::ServerError(ServerError::IoError(e)),
+            Err(e) => return Self::ServerError(e.into()),
         };
         let mut body = String::from("# Directory listing\n=> .. Parent\n");
         for entry in contents {
             let entry = match entry {
                 Ok(e) => e,
-                Err(e) => return Self::ServerError(ServerError::IoError(e)),
+                Err(e) => return Self::ServerError(e.into()),
             };
             let entry = match entry.file_name().to_os_string().to_str() {
                 Some(e) => e.to_string(),
                 None => {
-                    return Self::ServerError(ServerError::IoError(std::io::Error::new(
-                        ErrorKind::Other,
-                        "Invalid pathname",
-                    )))
+                    let err = io::Error::new(ErrorKind::Other, "Invalid pathname");
+                    return Self::ServerError(err.into());
                 }
             };
             if let Err(e) = writeln!(body, "=> {}", entry) {
-                return Self::ServerError(ServerError::IoError(std::io::Error::new(
-                    ErrorKind::Other,
-                    e,
-                )));
+                let err = io::Error::new(ErrorKind::Other, e);
+                return Self::ServerError(err.into());
             }
         }
         Self::Success {
@@ -94,14 +103,14 @@ impl From<Request> for Response {
     fn from(request: Request) -> Self {
         let server = match CONFIG.vhosts.get(&request.host) {
             Some(s) => s,
-            None => return Self::ServerError(ServerError::NotFound),
+            None => return ServerError::NotFound.into(),
         };
         for (dir, directive) in &server.directories {
             if request.path.starts_with(&dir) {
                 match directive {
                     Directive::Allow(val) => {
                         if !val {
-                            return Self::ServerError(ServerError::Unauthorized);
+                            return ServerError::Unauthorized.into();
                         }
                     }
                     Directive::Alias(path) => {
@@ -130,13 +139,13 @@ impl From<Request> for Response {
                     Directive::Cgi => {
                         let cgi = match Cgi::new(request, server, dir) {
                             Ok(c) => c,
-                            Err(e) => return Self::ServerError(e),
+                            Err(e) => return e.into(),
                         };
                         match cgi.run() {
                             Ok(output) => {
                                 let idx = match output.stdout.iter().position(|&x| x == b'\n') {
                                     Some(i) => i,
-                                    None => return Self::ServerError(ServerError::CgiError),
+                                    None => return ServerError::CgiError.into(),
                                 };
                                 let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
                                 let body = Vec::from(&output.stdout[idx + 1..]);
@@ -145,7 +154,7 @@ impl From<Request> for Response {
                                     body,
                                 };
                             }
-                            Err(_) => return Self::ServerError(ServerError::CgiError),
+                            Err(_) => return ServerError::CgiError.into(),
                         }
                     }
                 }
@@ -155,8 +164,8 @@ impl From<Request> for Response {
         let request_base = match request.path.strip_prefix("/") {
             Ok(p) => p,
             Err(e) => {
-                let err = std::io::Error::new(ErrorKind::Other, e);
-                return Self::ServerError(ServerError::IoError(err));
+                let err = io::Error::new(ErrorKind::Other, e);
+                return Self::ServerError(err.into());
             }
         };
         path.push(request_base);
@@ -167,14 +176,14 @@ impl From<Request> for Response {
                 return path.into();
             }
         }
-        let fd = match std::fs::File::open(&path) {
+        let fd = match File::open(&path) {
             Ok(f) => f,
-            Err(e) => return Self::ServerError(ServerError::IoError(e)),
+            Err(e) => return Self::ServerError(e.into()),
         };
         let mut reader = BufReader::new(fd);
         let mut buf = vec![];
         if let Err(e) = reader.read_to_end(&mut buf) {
-            return Self::ServerError(ServerError::IoError(e));
+            return Self::ServerError(e.into());
         }
         let mimetype = match path.extension() {
             Some(ext) if ext == "gmi" => "text/gemini",

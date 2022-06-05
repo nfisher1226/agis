@@ -74,7 +74,7 @@ impl Config {
     /// Gets the `libc::passwd` for the user that the server will run as
     /// # Errors
     /// Returns an `io::Error` if unable to create a `CString`
-    pub fn getpwnam(&self) -> Result<*mut libc::passwd, std::io::Error> {
+    pub fn getpwnam(&self) -> Result<*mut libc::passwd, Error> {
         let user = CString::new(self.user.as_bytes())?;
         let uid = unsafe { libc::getpwnam(user.as_ptr()) };
         if uid.is_null() {
@@ -87,7 +87,7 @@ impl Config {
     /// Gets the `libc::group` for the group that the server will run as
     /// # Errors
     /// Returns an `io::Error` if unable to create a `CString`
-    pub fn getgrnam(&self) -> Result<*mut libc::group, std::io::Error> {
+    pub fn getgrnam(&self) -> Result<*mut libc::group, Error> {
         let group = CString::new(self.group.as_bytes())?;
         let gid = unsafe { libc::getgrnam(group.as_ptr()) };
         if gid.is_null() {
