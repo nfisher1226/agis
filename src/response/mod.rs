@@ -83,10 +83,7 @@ impl From<PathBuf> for Response {
             let entry = match entry.file_name().to_os_string().to_str() {
                 Some(e) => e.to_string(),
                 None => {
-                    let err = io::Error::new(
-                        ErrorKind::Other,
-                        "Invalid pathname"
-                    );
+                    let err = io::Error::new(ErrorKind::Other, "Invalid pathname");
                     return Self::ServerError(err.into());
                 }
             };

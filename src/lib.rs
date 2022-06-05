@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
-use std::{ffi::CString, os::unix::prelude::OsStrExt};
 use log::LogError;
+use std::{ffi::CString, os::unix::prelude::OsStrExt};
 
 /// Server configuration
 pub mod config;
@@ -104,24 +104,25 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), std::i
 /// Handles the connection
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let reader = BufReader::new(&stream);
-    let request = match Request::try_from(reader) {
-        Ok(r) => r,
-        Err(e) => {
-            e.log_err()?;
-            return Err(e.into());
-        }
+    let (request, response) = match Request::try_from(reader) {
+        Ok(request) => (request.to_string(), Response::from(request)),
+        Err(e) => (String::from("Malformed request"), e.into()),
     };
-    let msg = request.to_string();
-    let response = Response::from(request);
+    let msg = response.to_string();
     match response {
         Response::Success {
             mimetype: _,
             body: _,
         }
-        | Response::Redirect(_) => msg.log()?,
-        Response::ClientError(_) | Response::ServerError(_) => msg.log_err()?,
+        | Response::Redirect(_) => {
+            request.log()?;
+            msg.log()?;
+        }
+        Response::ClientError(_) | Response::ServerError(_) => {
+            request.log_err()?;
+            msg.log_err()?;
+        }
     }
-    response.log()?;
     let mut writer = BufWriter::new(&mut stream);
     writer.write_all(&Vec::from(response))?;
     Ok(())

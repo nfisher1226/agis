@@ -1,7 +1,11 @@
 use {
     crate::CONFIG,
     chrono::{DateTime, Utc},
-    std::{fmt::Display, io::{BufWriter, Write}, fs::OpenOptions},
+    std::{
+        fmt::Display,
+        fs::OpenOptions,
+        io::{BufWriter, Write},
+    },
 };
 
 /// Logging access to the server

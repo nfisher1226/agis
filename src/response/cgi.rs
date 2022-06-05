@@ -88,7 +88,7 @@ impl Cgi {
                 let mut fd = File::create(&path)?;
                 fd.write_all(body)?;
                 format!("{}", path.display())
-            },
+            }
             None => String::new(),
         };
         Command::new(&self.script_filename)

@@ -1,5 +1,5 @@
-use std::{collections::HashMap, path::PathBuf};
 use serde::Deserialize;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Deserialize)]
 /// A name-based virtual host
