@@ -4,7 +4,7 @@ use {
     std::{
         fmt::Display,
         fs::OpenOptions,
-        io::{BufWriter, Write},
+        io::{self, BufWriter, Write},
     },
 };
 
@@ -25,7 +25,7 @@ pub trait LogError {
 }
 
 impl Log for std::string::String {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();
@@ -43,7 +43,7 @@ impl Log for std::string::String {
 }
 
 impl Log for crate::Response {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();
@@ -83,7 +83,7 @@ impl<T> LogError for T
 where
     T: Display,
 {
-    type Error = std::io::Error;
+    type Error = io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
         let dt: DateTime<Utc> = Utc::now();

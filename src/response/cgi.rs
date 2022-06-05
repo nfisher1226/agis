@@ -22,7 +22,7 @@ use {
     crate::{config::Server, response::ServerError, CONFIG},
     std::{
         fs::File,
-        io::Write,
+        io::{self, Write},
         path::Path,
         process::{Command, Output},
     },
@@ -80,7 +80,7 @@ impl Cgi {
     }
 
     /// Runs the CGI program and returns it's output
-    pub fn run(&self) -> std::io::Result<Output> {
+    pub fn run(&self) -> io::Result<Output> {
         let dir = tempfile::tempdir()?;
         let tmpfile = match self.body.as_ref() {
             Some(body) => {

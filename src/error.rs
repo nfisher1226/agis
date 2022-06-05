@@ -1,5 +1,5 @@
 #![allow(clippy::module_name_repetitions)]
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt, io};
 
 #[derive(Debug)]
 /// Errors which might occur while parsing a request
@@ -16,8 +16,8 @@ pub enum RequestError {
     ReadError(std::io::Error),
 }
 
-impl Display for RequestError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for RequestError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::MissingSeparator => write!(f, "Missing separator"),
             Self::MissingField => write!(f, "Missing field"),
@@ -37,8 +37,8 @@ impl Error for RequestError {
     }
 }
 
-impl From<std::io::Error> for RequestError {
-    fn from(error: std::io::Error) -> Self {
+impl From<io::Error> for RequestError {
+    fn from(error: io::Error) -> Self {
         Self::ReadError(error)
     }
 }
@@ -56,8 +56,8 @@ pub enum ServerError {
     IoError(std::io::Error),
 }
 
-impl Display for ServerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ServerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotFound => write!(f, "Resource not found"),
             Self::CgiError => write!(f, "Script failed"),
@@ -76,8 +76,8 @@ impl Error for ServerError {
     }
 }
 
-impl From<std::io::Error> for ServerError {
-    fn from(error: std::io::Error) -> Self {
+impl From<io::Error> for ServerError {
+    fn from(error: io::Error) -> Self {
         Self::IoError(error)
     }
 }
