@@ -82,6 +82,7 @@ the conf/ subdirectory. It can be copied into /etc/systemd/system and then
 started and stopped like any other service.
 
 If you are on a Linux system that does not use systemd, or bsd, it should be
-straitforward to write your own init script. Agis does not currently support
-any options at startup time, getting all of it's configuration properties from
-it's config file. So just invoke the binary without options.
+straitforward to write your own init script. The default location for the
+configuration file is `/etc/agis/config.ron` but can be overridden on the command
+line with the `-c` of `--config` flag. This is currently the only command line
+option which is supported, making startup quite straightforward.
