@@ -5,6 +5,11 @@ use {
 };
 
 fn main() -> std::io::Result<()> {
+    let matches = agis::options().unwrap();
+    if matches.opt_present("h") {
+        agis::usage();
+        process::exit(0);
+    }
     let uid = unsafe { libc::getuid() };
     if uid != 0 {
         let prog = env!("CARGO_PKG_NAME");

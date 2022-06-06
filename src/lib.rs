@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+
 /// Server configuration
 pub mod config;
 /// Possible errors
@@ -13,10 +14,12 @@ pub mod response;
 pub mod threadpool;
 
 use {
+    getopts::{Fail, Matches, Options},
     lazy_static::lazy_static,
     log::{Log, LogError},
     response::Response,
     std::{
+        env,
         ffi::CString,
         fs::{self, File},
         io::{self, BufReader, BufWriter, Write},
@@ -125,4 +128,31 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     let mut writer = BufWriter::new(&mut stream);
     writer.write_all(&Vec::from(response))?;
     Ok(())
+}
+
+pub fn options() -> Result<Matches, Fail>{
+    let args: Vec<String> = env::args().collect();
+    let mut opts = Options::new();
+    opts.optopt("c", "config", "Use NAME as config file", "NAME");
+    opts.optflag("h", "help", "Print this help menu");
+    opts.parse(&args[1..])
+}
+
+pub fn usage() {
+    let ustr = "_PROGNAME_ _VERSION_\n\
+        The JeanGnie <jeang3nie@hitchhiker-linux.org>\n\
+        A Spartan protocol server\n\
+        \n\
+        USAGE:\n    \
+        _PROGNAME_ <OPTIONS>\n\
+        \n\
+        OPTIONS:\n    \
+        -h, --help\n        \
+        Print help information\n\
+        \n\
+        -c, --config <config>\n        \
+        Usae <config> as the config file";
+    let ustr = ustr.replace("_PROGNAME_", env!("CARGO_PKG_NAME"))
+        .replace("_VERSION_", env!("CARGO_PKG_VERSION"));
+    println!("{ustr}");
 }

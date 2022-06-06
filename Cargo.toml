@@ -13,6 +13,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 chrono = "0.4"
+getopts = "0.2"
 lazy_static = "1.4"
 libc = "0.2"
 ron = "0.7"
