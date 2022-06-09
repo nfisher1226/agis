@@ -130,7 +130,7 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     Ok(())
 }
 
-pub fn options() -> Result<Matches, Fail>{
+pub fn options() -> Result<Matches, Fail> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
     opts.optopt("c", "config", "Use NAME as config file", "NAME");
@@ -152,7 +152,8 @@ pub fn usage() {
         \n\
         -c, --config <config>\n        \
         Usae <config> as the config file";
-    let ustr = ustr.replace("_PROGNAME_", env!("CARGO_PKG_NAME"))
+    let ustr = ustr
+        .replace("_PROGNAME_", env!("CARGO_PKG_NAME"))
         .replace("_VERSION_", env!("CARGO_PKG_VERSION"));
     println!("{ustr}");
 }

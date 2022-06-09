@@ -22,6 +22,7 @@ cargo build --release
 - [x] Static files
 - [x] Virtual hosts (name based)
 - [x] CGI
+- [x] CGI ScriptAlias
 - [x] Redirects
 - [x] Aliases
 - [x] indexes
@@ -57,10 +58,10 @@ Each vhost is looked up by a key, which is the domain name it will serve.
 
 ### Directives
 Each directive is looked up via a key, which is the path which it applies to.
-- Allow - whether or not to allow access to this path. If not set, all files
+- Allow(bool) - whether or not to allow access to this path. If not set, all files
   in the document tree under the server root are allowed. If set to false, all
   files under this path are disallowed.
-- Alias - Serves files requested for this path from a different path. This is
+- Alias(path) - Serves files requested for this path from a different path. This is
   handled by the server transparently to the client.
 - Redirect - Any request for this specific path will be sent a redirect to the
   new location, to be handled by the client.
@@ -70,6 +71,11 @@ Each directive is looked up via a key, which is the path which it applies to.
   then the program located at '/server-root/cgi-bin/foo' will be run and given
   the rest of the path and query as environment variables. This implementation
   is a subset of CGI 1.1 with http specific environment vars removed.
+- ScriptAlias(path) - Any requests under this path will be interpreted via the
+  CGI program specified by <path>. The <path> is given as an absolute path, with
+  the path to the server root stripped from it. Thus, if the server root is
+  `/srv/spartan` and the CGI program resides at `/srv/spartan/cgi-bin/hello`,
+  then <path> would be given as `/cgi-bin/hello`.
 
 The default configuration runs the server as user 'agis' and group 'agis'. You
 will need to create that user and group on your system or Agis will not run.
@@ -84,5 +90,5 @@ started and stopped like any other service.
 If you are on a Linux system that does not use systemd, or bsd, it should be
 straitforward to write your own init script. The default location for the
 configuration file is `/etc/agis/config.ron` but can be overridden on the command
-line with the `-c` of `--config` flag. This is currently the only command line
+line with the `-c` or `--config` flag. This is currently the only command line
 option which is supported, making startup quite straightforward.

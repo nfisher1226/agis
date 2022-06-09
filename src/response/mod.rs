@@ -136,8 +136,32 @@ impl From<Request> for Response {
                             return Self::Redirect(path.clone());
                         }
                     }
+                    Directive::Interpreter(_prog) => {
+                        unimplemented!();
+                    }
                     Directive::Cgi => {
                         let cgi = match Cgi::new(request, server, dir) {
+                            Ok(c) => c,
+                            Err(e) => return e.into(),
+                        };
+                        match cgi.run() {
+                            Ok(output) => {
+                                let idx = match output.stdout.iter().position(|&x| x == b'\n') {
+                                    Some(i) => i,
+                                    None => return ServerError::CgiError.into(),
+                                };
+                                let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
+                                let body = Vec::from(&output.stdout[idx + 1..]);
+                                return Self::Success {
+                                    mimetype: mimetype.to_string(),
+                                    body,
+                                };
+                            }
+                            Err(_) => return ServerError::CgiError.into(),
+                        }
+                    }
+                    Directive::ScriptAlias(script) => {
+                        let cgi = match Cgi::from_script_alias(request, server, script) {
                             Ok(c) => c,
                             Err(e) => return e.into(),
                         };

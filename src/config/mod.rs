@@ -57,7 +57,9 @@ impl Config {
     /// Returns an `io::Error` if the file cannot be read or if it is invalid
     pub fn load() -> Result<Self, Error> {
         let opts = crate::options().unwrap();
-        let cfg = opts.opt_str("c").unwrap_or("/etc/agis/config.ron".to_string());
+        let cfg = opts
+            .opt_str("c")
+            .unwrap_or_else(|| "/etc/agis/config.ron".to_string());
         let raw = fs::read_to_string(cfg)?;
         match ron::de::from_str(&raw) {
             Ok(c) => Ok(c),

@@ -21,8 +21,12 @@ pub enum Directive {
     Alias(String),
     /// Causes to server to send a redirect code back to the client
     Redirect(PathBuf),
+    /// Files under this directory will be processed by the given interpreter
+    Interpreter(String),
     /// Paths under this directory are Common Gateway Interface programs
     Cgi,
+    /// Paths under this directory will run <script>
+    ScriptAlias(PathBuf),
 }
 
 impl Default for Server {

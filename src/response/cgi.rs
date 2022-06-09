@@ -56,7 +56,7 @@ impl Cgi {
         let mut script_name = dir.to_path_buf();
         script_name.push(script_base);
         let mut script_filename = server.root.clone();
-        script_filename.push(&script_name.strip_prefix("/").unwrap());
+        script_filename.push(&script_name.strip_prefix("/").unwrap_or(&script_name));
         let query_string = match &request.query {
             Some(q) => q.to_string(),
             None => String::new(),
@@ -72,6 +72,39 @@ impl Cgi {
             ),
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name.display()),
+            server_name: server.name.clone(),
+            server_port: CONFIG.port.clone(),
+            server_software,
+            body: request.content,
+        })
+    }
+
+    pub fn from_script_alias(
+        request: Request,
+        server: &Server,
+        script_alias: &Path,
+    ) -> Result<Self, ServerError> {
+        let script_name = match script_alias.file_name() {
+            Some(name) => name.to_string_lossy(),
+            None => return Err(ServerError::CgiError),
+        };
+        let mut script_filename = server.root.clone();
+        script_filename.push(script_alias.strip_prefix("/").unwrap_or(script_alias));
+        let query_string = match &request.query {
+            Some(q) => q.to_string(),
+            None => String::new(),
+        };
+        let server_software = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+        Ok(Self {
+            document_root: format!("{}", server.root.display()),
+            query_string,
+            request_uri: format!(
+                "{}{}",
+                request.path.display(),
+                request.query.as_ref().unwrap_or(&"".to_string())
+            ),
+            script_filename: format!("{}", script_filename.display()),
+            script_name: format!("{}", script_name),
             server_name: server.name.clone(),
             server_port: CONFIG.port.clone(),
             server_software,
