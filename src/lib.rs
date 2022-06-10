@@ -22,7 +22,7 @@ use {
         env,
         ffi::CString,
         fs::{self, File},
-        io::{self, BufReader, BufWriter, Write},
+        io::{self, BufWriter, Write},
         net::TcpStream,
         os::unix::prelude::OsStrExt,
         process,
@@ -105,8 +105,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
 
 /// Handles the connection
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
-    let reader = BufReader::new(&stream);
-    let (request, response) = match Request::try_from(reader) {
+    let (request, response) = match Request::try_from(&stream) {
         Ok(request) => (request.to_string(), Response::from(request)),
         Err(e) => (String::from("Malformed request"), e.into()),
     };

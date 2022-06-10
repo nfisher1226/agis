@@ -32,6 +32,7 @@ use {
 pub struct Cgi {
     document_root: String,
     query_string: String,
+    remote_addr: String,
     request_uri: String,
     script_filename: String,
     script_name: String,
@@ -65,6 +66,7 @@ impl Cgi {
         Ok(Self {
             document_root: format!("{}", server.root.display()),
             query_string,
+            remote_addr: format!("{}", request.client_ip),
             request_uri: format!(
                 "{}{}",
                 request.path.display(),
@@ -98,6 +100,7 @@ impl Cgi {
         Ok(Self {
             document_root: format!("{}", server.root.display()),
             query_string,
+            remote_addr: format!("{}", request.client_ip),
             request_uri: format!(
                 "{}{}",
                 request.path.display(),
@@ -128,6 +131,7 @@ impl Cgi {
             .envs([
                 ("DOCUMENT_ROOT", &self.document_root),
                 ("QUERY_STRING", &self.query_string),
+                ("REMOTE_ADDR", &self.remote_addr),
                 ("REQUEST_URI", &self.request_uri),
                 ("SCRIPT_FILENAME", &self.script_filename),
                 ("SCRIPT_NAME", &self.script_name),

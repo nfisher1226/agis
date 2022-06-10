@@ -4,7 +4,7 @@ use {
         convert::TryFrom,
         fmt,
         io::{BufRead, BufReader, Read},
-        net::TcpStream,
+        net::{IpAddr, TcpStream},
         path::PathBuf,
     },
 };
@@ -18,6 +18,8 @@ pub struct Request {
     pub path: PathBuf,
     /// The optional query string
     pub query: Option<String>,
+    /// Client Ip address
+    pub client_ip: IpAddr,
     /// The length of submitted content
     pub length: usize,
     /// Content to be uploaded
@@ -28,19 +30,21 @@ impl fmt::Display for Request {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Request: {{ host: {}; path: {}; query: {}; length: {}; }}",
+            "Request: {{ host: {}; path: {}; query: {}; client_ip: {}; length: {}; }}",
             &self.host,
             self.path.display(),
             self.query.as_ref().unwrap_or(&String::from("none")),
+            self.client_ip,
             self.length,
         )
     }
 }
 
-impl TryFrom<BufReader<&TcpStream>> for Request {
+impl TryFrom<&TcpStream> for Request {
     type Error = RequestError;
 
-    fn try_from(mut reader: BufReader<&TcpStream>) -> Result<Self, Self::Error> {
+    fn try_from(stream: &TcpStream) -> Result<Self, Self::Error> {
+        let mut reader = BufReader::new(stream);
         let mut request_header = String::new();
         reader.read_line(&mut request_header)?;
         let parts: Vec<&str> = request_header.split_whitespace().collect();
@@ -65,10 +69,12 @@ impl TryFrom<BufReader<&TcpStream>> for Request {
                 } else {
                     (PathBuf::from(&parts[1]), None)
                 };
+                let client_ip = stream.peer_addr()?.ip();
                 Ok(Self {
                     host: parts[0].to_string(),
                     path,
                     query,
+                    client_ip,
                     length,
                     content,
                 })

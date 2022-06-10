@@ -122,13 +122,7 @@ impl From<Request> for Response {
                         };
                         let mut path = PathBuf::from(path);
                         path.push(children);
-                        let r = Request {
-                            host: request.host,
-                            path,
-                            query: request.query,
-                            length: request.length,
-                            content: request.content,
-                        };
+                        let r = Request { path, ..request };
                         return Self::from(r);
                     }
                     Directive::Redirect(path) => {

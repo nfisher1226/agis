@@ -5,6 +5,8 @@ Contents
 - [Building](#building)
 - [Configuration](#configuration)
 - [Running](#running)
+- [CGI](#cgi)
+- [Script Alias](#script-alias)
 
 ## Description
 Agis will be a [Spartan protocol](https://portal.mozz.us/spartan/spartan.mozz.us/)
@@ -92,3 +94,31 @@ straitforward to write your own init script. The default location for the
 configuration file is `/etc/agis/config.ron` but can be overridden on the command
 line with the `-c` or `--config` flag. This is currently the only command line
 option which is supported, making startup quite straightforward.
+
+## CGI
+A CGI program can be written in any language and receives it's input via
+environment variables. The program's output should present it's mime type in
+plain text, followed by a carriage return and newline, and then any data which
+is representable via a sequence of u8 bytes. This can be plain text but does not
+have to be.
+### CGI environment vars
+| Var | Meaning |
+| --- | --- |
+| DOCUMENT_ROOT | The root directory of your server |
+| QUERY_STRING | The query string |
+| REMOTE_ADDR | The IP address of the client |
+| REQUEST_URI | The interpreted pathname of the requested document or CGI (relative to the document root) |
+| SCRIPT_FILENAME | The full pathname of the current CGI |
+| SCRIPT_NAME | The interpreted pathname of the current CGI (relative to the document root) |
+| SERVER_NAME | Your server's fully qualified domain name (e.g. www.cgi101.com) |
+| SERVER_PORT | The port number your server is listening on |
+| SERVER_SOFTWARE | The server software you're using |
+| REQUEST_BODY | The path to a temporary file containing any content uploaded to the server |
+
+## ScriptAlias
+The ScriptAlias directive allows passing requests to a CGI program without the
+cgi-bin directory or program name appearing in the url. In this way, dynamic
+content can be served without revealing to the client that a CGI program is being
+run or what the nature of that program is. This might be desireable if, for instance,
+one is using php scripting and doesn't wish to make that readily known to potential
+attackers.
