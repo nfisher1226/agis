@@ -64,11 +64,14 @@ impl TryFrom<&TcpStream> for Request {
                         Some(buf)
                     }
                 };
-                let (path, query) = if let Some((p, q)) = parts[1].split_once('?') {
+                let (mut path, query) = if let Some((p, q)) = parts[1].split_once('?') {
                     (PathBuf::from(p), Some(q.to_string()))
                 } else {
                     (PathBuf::from(&parts[1]), None)
                 };
+                if !path.has_root() {
+                    path.push("/");
+                }
                 let client_ip = stream.peer_addr()?.ip();
                 Ok(Self {
                     host: parts[0].to_string(),
