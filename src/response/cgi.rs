@@ -101,11 +101,10 @@ impl Cgi {
             document_root: format!("{}", server.root.display()),
             query_string,
             remote_addr: format!("{}", request.client_ip),
-            request_uri: format!(
-                "{}{}",
-                request.path.display(),
-                request.query.as_ref().unwrap_or(&"".to_string())
-            ),
+            request_uri: match request.query {
+                Some(q) => format!("{}?{}", request.path.display(), &q),
+                None => format!("{}", request.path.display()),
+            },
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name),
             server_name: server.name.clone(),
@@ -128,7 +127,9 @@ impl Cgi {
             None => String::new(),
         };
         Command::new(&self.script_filename)
+            .env_clear()
             .envs([
+                ("PATH", "/usr/local/bin:/usr/bin:/bin"),
                 ("DOCUMENT_ROOT", &self.document_root),
                 ("QUERY_STRING", &self.query_string),
                 ("REMOTE_ADDR", &self.remote_addr),
