@@ -6,6 +6,7 @@
 //! - DOCUMENT_ROOT is the document root of the virtual host serving this request.
 //! - QUERY_STRING is the portion of the request following the '?' character,
 //!   useful for setting additional variables.
+//! - REMOTE_ADDR is the ip address of the client making the request
 //! - REQUEST_URI is the interpreted pathname of the requested document or CGI
 //!   (relative to the document root).
 //! - SCRIPT_FILENAME is the full filesystem path to the CGI program
