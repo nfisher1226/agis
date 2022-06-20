@@ -16,12 +16,27 @@ mod server;
 pub use server::{Directive, Server};
 
 #[derive(Deserialize)]
-/// Configuration variables for the server
-pub struct Config {
+pub struct Address {
     /// The ip address to bind to
-    pub address: String,
+    pub ip: String,
     /// The port to run on
     pub port: String,
+}
+
+impl Default for Address {
+    fn default() -> Self {
+        Self {
+            ip: String::from("0.0.0.0"),
+            port: String::from("300"),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+/// Configuration variables for the server
+pub struct Config {
+    /// The ip address and port to bind to
+    pub address: Address,
     /// The user the server should run as
     pub user: String,
     /// The group the server should run as
@@ -39,8 +54,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            address: String::from("0.0.0.0"),
-            port: String::from("300"),
+            address: Address::default(),
             user: String::from("agis"),
             group: String::from("agis"),
             threads: 4,

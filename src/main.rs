@@ -19,18 +19,18 @@ fn main() -> std::io::Result<()> {
     }
     let user = CONFIG.getpwnam()?;
     let group = CONFIG.getgrnam()?;
-    let listener = TcpListener::bind(format!("{}:{}", CONFIG.address, CONFIG.port))?;
+    println!("Starting up thread pool");
+    let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
+    let pool = agis::ThreadPool::new(threads);
+    let listener = TcpListener::bind(format!("{}:{}", CONFIG.address.ip, CONFIG.address.port))?;
     println!(
         "Binding to address {} on port {}.",
-        CONFIG.address, CONFIG.port
+        CONFIG.address.ip, CONFIG.address.port
     );
     unsafe {
         agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;
     }
-    println!("Starting up thread pool");
-    let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
-    let pool = agis::ThreadPool::new(threads);
     println!("Priviledges dropped, listening for incoming connections.");
     for stream in listener.incoming() {
         let stream = stream.unwrap();

@@ -1,8 +1,11 @@
 (
-    // The ip address to bind to
-    address: "0.0.0.0",
-    // The port to bind to
-    port: "300",
+    // The ip address and port to bind to
+    address: (
+        // The ip address to bind to
+        ip: "0.0.0.0",
+        // The port to bind to
+        port: "300",
+    ),
     // The user the server will run as
     user: "agis",
     // The group the server will run as

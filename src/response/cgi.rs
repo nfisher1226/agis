@@ -76,7 +76,7 @@ impl Cgi {
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name.display()),
             server_name: server.name.clone(),
-            server_port: CONFIG.port.clone(),
+            server_port: CONFIG.address.port.clone(),
             server_software,
             body: request.content,
         })
@@ -109,7 +109,7 @@ impl Cgi {
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name),
             server_name: server.name.clone(),
-            server_port: CONFIG.port.clone(),
+            server_port: CONFIG.address.port.clone(),
             server_software,
             body: request.content,
         })
