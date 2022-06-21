@@ -6,6 +6,14 @@
         // The port to bind to
         port: "300",
     ),
+    // An optional second address, useful for running both ipv4 and ipv6
+    // simultaneously.
+    //
+    // Note: this will double the amount of worker threads
+    // address1: Some((
+    //     ip: "::1",
+    //     port: "300",
+    // )),
     // The user the server will run as
     user: "agis",
     // The group the server will run as
