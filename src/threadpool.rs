@@ -4,7 +4,7 @@ use std::{
     thread,
 };
 
-/// A pool of workerr threads to handle requests
+/// A pool of worker threads to handle requests
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,

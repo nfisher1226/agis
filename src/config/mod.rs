@@ -37,6 +37,8 @@ impl Default for Address {
 pub struct Config {
     /// The ip address and port to bind to
     pub address: Address,
+    /// An optional second address, in case of running both ipv4 and ipv6
+    pub address1: Option<Address>,
     /// The user the server should run as
     pub user: String,
     /// The group the server should run as
@@ -55,6 +57,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             address: Address::default(),
+            address1: None,
             user: String::from("agis"),
             group: String::from("agis"),
             threads: 4,
