@@ -37,10 +37,14 @@ braces (such as C). There is an example config file with plenty of comments in
 to match your actual desired configuration.
 
 ### Fields (Global)
-- address - The ip address to bind to. Change this to your server's public ip
-  address.
-- port - The port to listen on. Spartan specifies port 300, so only change this
-  if you have a specific use case for it.
+- address
+  - ip - The ip address to bind to
+  - port - The port to listen on. Spartan specifies port 300, so only change this
+    if you have a specific use case for it.
+- address1 - An optional second ip address, useful for example to run both ipv4
+  and ipv6 simultaneously. If not needed, can be omitted entirely.
+  - ip - as above
+  - port - as above
 - user - The user which this server will run as. Agis must be started as root in
   order to bind to one of the lower ports, but will drop priviledges as soon as
   it is initialized.
@@ -51,6 +55,8 @@ to match your actual desired configuration.
   is set to `Some(path)` access will be logged to that file.
 - error_log - See access_log for specifics. Logs errors either to stderr or file.
 - vhosts - One or more name based virtual hosts.
+
+> Note: Binding to a second address will double the number of worker threads.
 
 ### Fields (per Vhost)
 Each vhost is looked up by a key, which is the domain name it will serve.
