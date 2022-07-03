@@ -12,7 +12,7 @@ use {
         fmt::{self, Write},
         fs::{self, File},
         io::{self, BufReader, ErrorKind, Read},
-        path::PathBuf,
+        path::{Path, PathBuf},
     },
 };
 
@@ -106,7 +106,7 @@ impl From<Request> for Response {
             None => return ServerError::NotFound.into(),
         };
         for (dir, directive) in &server.directories {
-            if request.path.starts_with(&dir) {
+            if PathBuf::from(&request.path).starts_with(&dir) {
                 match directive {
                     Directive::Allow(val) => {
                         if !val {
@@ -114,19 +114,23 @@ impl From<Request> for Response {
                         }
                     }
                     Directive::Alias(path) => {
-                        let children = request.path.strip_prefix(dir).unwrap();
+                        let children = PathBuf::from(&request.path)
+                            .strip_prefix(dir)
+                            .map(Path::to_path_buf)
+                            .unwrap();
                         let children = if children.starts_with("/") {
-                            children.strip_prefix("/").unwrap()
+                            children.strip_prefix("/").map(Path::to_path_buf).unwrap()
                         } else {
                             children
                         };
                         let mut path = PathBuf::from(path);
                         path.push(children);
+                        let path = path.to_string_lossy().to_string();
                         let r = Request { path, ..request };
                         return Self::from(r);
                     }
                     Directive::Redirect(path) => {
-                        if request.path.as_path() == dir.as_path() {
+                        if PathBuf::from(&request.path).as_path() == dir.as_path() {
                             return Self::Redirect(path.clone());
                         }
                     }
@@ -179,8 +183,8 @@ impl From<Request> for Response {
             }
         }
         let mut path = server.root.clone();
-        let request_base = match request.path.strip_prefix("/") {
-            Ok(p) => p,
+        let request_base = match PathBuf::from(&request.path).strip_prefix("/") {
+            Ok(p) => p.to_path_buf(),
             Err(e) => {
                 let err = io::Error::new(ErrorKind::Other, e);
                 return Self::ServerError(err.into());

@@ -24,7 +24,7 @@ use {
     std::{
         fs::File,
         io::{self, Write},
-        path::Path,
+        path::{Path, PathBuf},
         process::{Command, Output},
     },
 };
@@ -46,8 +46,8 @@ pub struct Cgi {
 impl Cgi {
     /// Constructs the Cgi struct from a `Request`, `Server` and a path
     pub fn new(request: Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
-        let base = match request.path.strip_prefix(dir) {
-            Ok(b) => b,
+        let base = match PathBuf::from(&request.path).strip_prefix(dir) {
+            Ok(b) => b.to_path_buf(),
             Err(_) => return Err(ServerError::CgiError),
         };
         let mut parts = base.components();
@@ -70,7 +70,7 @@ impl Cgi {
             remote_addr: format!("{}", request.client_ip),
             request_uri: format!(
                 "{}{}",
-                request.path.display(),
+                &request.path,
                 request.query.as_ref().unwrap_or(&"".to_string())
             ),
             script_filename: format!("{}", script_filename.display()),
@@ -103,8 +103,8 @@ impl Cgi {
             query_string,
             remote_addr: format!("{}", request.client_ip),
             request_uri: match request.query {
-                Some(q) => format!("{}?{}", request.path.display(), &q),
-                None => format!("{}", request.path.display()),
+                Some(q) => format!("{}?{}", &request.path, &q),
+                None => format!("{}", &request.path),
             },
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name),

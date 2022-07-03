@@ -5,7 +5,6 @@ use {
         fmt,
         io::{BufRead, BufReader, Read},
         net::{IpAddr, TcpStream},
-        path::PathBuf,
     },
 };
 
@@ -15,7 +14,7 @@ pub struct Request {
     /// The fully qualified domain name of the host
     pub host: String,
     /// The absolute path of the requested document
-    pub path: PathBuf,
+    pub path: String,
     /// The optional query string
     pub query: Option<String>,
     /// Client Ip address
@@ -32,7 +31,7 @@ impl fmt::Display for Request {
             f,
             "Request: {{ host: {}; path: {}; query: {}; client_ip: {}; length: {}; }}",
             &self.host,
-            self.path.display(),
+            &self.path,
             self.query.as_ref().unwrap_or(&String::from("none")),
             self.client_ip,
             self.length,
@@ -65,12 +64,12 @@ impl TryFrom<&TcpStream> for Request {
                     }
                 };
                 let (mut path, query) = if let Some((p, q)) = parts[1].split_once('?') {
-                    (PathBuf::from(p), Some(q.to_string()))
+                    (p.to_string(), Some(q.to_string()))
                 } else {
-                    (PathBuf::from(&parts[1]), None)
+                    (parts[1].to_string(), None)
                 };
-                if !path.has_root() {
-                    path.push("/");
+                if path.is_empty() {
+                    path.push('/');
                 }
                 let client_ip = stream.peer_addr()?.ip();
                 Ok(Self {
