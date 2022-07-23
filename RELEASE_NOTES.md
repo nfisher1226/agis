@@ -7,6 +7,7 @@ Contents
 # Unreleased
 - Ability to override config file location on the command line
 - Bind to optional second address to support ipv4 and ipv6 at the same time
+- Handle percent encoded url's properly
 
 # 0.3.0
 - ScriptAlias support
