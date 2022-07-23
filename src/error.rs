@@ -1,5 +1,5 @@
 #![allow(clippy::module_name_repetitions)]
-use std::{error::Error, fmt, io};
+use std::{error::Error, fmt, io, string::FromUtf8Error};
 
 #[derive(Debug)]
 /// Errors which might occur while parsing a request
@@ -12,6 +12,8 @@ pub enum RequestError {
     ExtraField,
     /// The content length was not a valid number
     InvalidContentLength,
+    /// The request was not valid utf8
+    InvalidUtf8,
     /// There was an error reading the request
     ReadError(std::io::Error),
 }
@@ -23,6 +25,7 @@ impl fmt::Display for RequestError {
             Self::MissingField => write!(f, "Missing field"),
             Self::ExtraField => write!(f, "Extra field"),
             Self::InvalidContentLength => write!(f, "Invalid content length"),
+            Self::InvalidUtf8 => write!(f, "Utf8 error"),
             Self::ReadError(e) => write!(f, "Read error: {}", &e),
         }
     }
@@ -40,6 +43,12 @@ impl Error for RequestError {
 impl From<io::Error> for RequestError {
     fn from(error: io::Error) -> Self {
         Self::ReadError(error)
+    }
+}
+
+impl From<FromUtf8Error> for RequestError {
+    fn from(_: FromUtf8Error) -> Self {
+        Self::InvalidUtf8
     }
 }
 

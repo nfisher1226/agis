@@ -63,10 +63,11 @@ impl TryFrom<&TcpStream> for Request {
                         Some(buf)
                     }
                 };
-                let (mut path, query) = if let Some((p, q)) = parts[1].split_once('?') {
+                let url = urlencoding::decode(&parts[1])?;
+                let (mut path, query) = if let Some((p, q)) = url.split_once('?') {
                     (p.to_string(), Some(q.to_string()))
                 } else {
-                    (parts[1].to_string(), None)
+                    (url.to_string(), None)
                 };
                 if path.is_empty() {
                     path.push('/');

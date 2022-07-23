@@ -19,6 +19,7 @@ libc = "0.2"
 ron = "0.7"
 tempfile = "3.3"
 tree_magic_mini = "3.0"
+urlencoding = "2.1"
 
 [dependencies.serde]
 version = "1.0"
