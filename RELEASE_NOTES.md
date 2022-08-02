@@ -8,6 +8,8 @@ Contents
 - Ability to override config file location on the command line
 - Bind to optional second address to support ipv4 and ipv6 at the same time
 - Handle percent encoded url's properly
+- Fall back to stdout/stderr if logs cannot be opened for writing
+- Make logging less verbose
 
 # 0.3.0
 - ScriptAlias support
