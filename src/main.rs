@@ -40,7 +40,7 @@ fn main() -> std::io::Result<()> {
         agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;
     }
-    println!("Priviledges dropped, listening for incoming connections.");
+    println!("Privileges dropped, listening for incoming connections.");
     if let Some(ls) = listener1 {
         thread::spawn(move || {
             let pool = agis::ThreadPool::new(threads);
