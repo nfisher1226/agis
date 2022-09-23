@@ -103,7 +103,8 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
     Ok(())
 }
 
-/// Handles the connection
+/// Attempts to parse a `Request` from the stream and to formulate
+/// a `Response` based upon that input.
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     let (request, response) = match Request::try_from(&stream) {
         Ok(request) => (request.to_string(), Response::from(request)),
@@ -129,6 +130,7 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     Ok(())
 }
 
+/// Collects and parses command line arguments
 pub fn options() -> Result<Matches, Fail> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
@@ -137,6 +139,7 @@ pub fn options() -> Result<Matches, Fail> {
     opts.parse(&args[1..])
 }
 
+/// Formulates a Usage string and prints it to stdout
 pub fn usage() {
     let ustr = "_PROGNAME_ _VERSION_\n\
         The JeanGnie <jeang3nie@hitchhiker-linux.org>\n\

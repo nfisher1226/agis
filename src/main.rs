@@ -6,11 +6,13 @@ use {
 };
 
 fn main() -> std::io::Result<()> {
+    // Get any CLI flags
     let matches = agis::options().unwrap();
     if matches.opt_present("h") {
         agis::usage();
         process::exit(0);
     }
+    // Make sure we're starting as root
     let uid = unsafe { libc::getuid() };
     if uid != 0 {
         let prog = env!("CARGO_PKG_NAME");
@@ -28,6 +30,8 @@ fn main() -> std::io::Result<()> {
         "Binding to address {} on port {}.",
         CONFIG.address.ip, CONFIG.address.port
     );
+    // We can optionally start up a second listener, useful if we want to listen
+    // on a second interface *or* listen to ipv4 and ipv6 simultaneously
     let listener1 = match CONFIG.address1 {
         Some(ref a) => {
             let l = TcpListener::bind(format!("{}:{}", a.ip, a.port))?;
@@ -36,6 +40,8 @@ fn main() -> std::io::Result<()> {
         },
         None => None,
     };
+    // Both of these functions call into libc, group them together so we only
+    // have one unsafe block
     unsafe {
         agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;

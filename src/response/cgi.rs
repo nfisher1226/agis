@@ -82,6 +82,8 @@ impl Cgi {
         })
     }
 
+    /// Formulates a `Response` from the output of a CGI script which has been
+    /// aliased to a path
     pub fn from_script_alias(
         request: Request,
         server: &Server,
@@ -104,7 +106,7 @@ impl Cgi {
             remote_addr: format!("{}", request.client_ip),
             request_uri: match request.query {
                 Some(q) => format!("{}?{}", &request.path, &q),
-                None => format!("{}", &request.path),
+                None => (&request.path).to_string(),
             },
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name),

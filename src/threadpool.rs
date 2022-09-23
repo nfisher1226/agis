@@ -10,6 +10,7 @@ pub struct ThreadPool {
     sender: mpsc::Sender<Message>,
 }
 
+/// A type alias representing a job for the threadpool
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
 enum Message {
@@ -62,6 +63,7 @@ pub struct Worker {
 }
 
 impl Worker {
+    /// Creates a new worker thread for the pool
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
         let thread = thread::spawn(move || loop {
             let message = receiver.lock().unwrap().recv().unwrap();
