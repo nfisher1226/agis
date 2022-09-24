@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
             let l = TcpListener::bind(format!("{}:{}", a.ip, a.port))?;
             println!("Binding to address {} on port {}.", a.ip, a.port);
             Some(l)
-        },
+        }
         None => None,
     };
     // Both of these functions call into libc, group them together so we only

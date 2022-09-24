@@ -15,8 +15,8 @@ pub mod threadpool;
 
 use {
     getopts::{Fail, Matches, Options},
-    lazy_static::lazy_static,
     log::{Log, LogError},
+    once_cell::sync::Lazy,
     response::Response,
     std::{
         env,
@@ -31,15 +31,13 @@ use {
 
 pub use {config::Config, request::Request, threadpool::ThreadPool};
 
-lazy_static! {
-    pub static ref CONFIG: Config = match Config::load() {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("Unable to load config: {e}");
-            process::exit(1);
-        }
-    };
-}
+pub static CONFIG: Lazy<Config> = Lazy::new(|| match Config::load() {
+    Ok(c) => c,
+    Err(e) => {
+        eprintln!("Unable to load config: {e}");
+        process::exit(1);
+    }
+});
 
 /// Drops priviledges after starting the server
 /// # Safety

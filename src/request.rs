@@ -58,7 +58,7 @@ impl TryFrom<&TcpStream> for Request {
                 let content = match length {
                     0 => None,
                     length => {
-                        let mut buf = Vec::with_capacity(length);
+                        let mut buf = vec![0; length];
                         reader.read_exact(&mut buf)?;
                         Some(buf)
                     }
