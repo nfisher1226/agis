@@ -82,6 +82,8 @@ impl Cgi {
         })
     }
 
+    /// Formulates a `Response` from the output of a CGI script which has been
+    /// aliased to a path
     pub fn from_script_alias(
         request: Request,
         server: &Server,

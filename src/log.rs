@@ -31,18 +31,16 @@ impl Log for std::string::String {
         let dt: DateTime<Utc> = Utc::now();
         let msg = format!("{} {};\n", dt.to_rfc3339(), self);
         match CONFIG.access_log.as_ref() {
-            Some(log) => {
-                match OpenOptions::new().append(true).open(log) {
-                    Ok(fd) => {
-                        let mut writer = BufWriter::new(fd);
-                        writer.write_all(msg.as_bytes())?;
-                    },
-                    Err(e) => {
-                        eprintln!("{e}");
-                        print!("{msg}");
-                    },
+            Some(log) => match OpenOptions::new().append(true).open(log) {
+                Ok(fd) => {
+                    let mut writer = BufWriter::new(fd);
+                    writer.write_all(msg.as_bytes())?;
                 }
-            }
+                Err(e) => {
+                    eprintln!("{e}");
+                    print!("{msg}");
+                }
+            },
             None => print!("{}", msg),
         }
         Ok(())
@@ -62,36 +60,32 @@ impl Log for crate::Response {
             | Self::Redirect(_) => {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.access_log.as_ref() {
-                    Some(log) => {
-                        match OpenOptions::new().append(true).open(log) {
-                            Ok(fd) => {
-                                let mut writer = BufWriter::new(fd);
-                                writer.write_all(msg.as_bytes())?;
-                            },
-                            Err(e) => {
-                                eprintln!("{e}");
-                                print!("{msg}");
-                            },
+                    Some(log) => match OpenOptions::new().append(true).open(log) {
+                        Ok(fd) => {
+                            let mut writer = BufWriter::new(fd);
+                            writer.write_all(msg.as_bytes())?;
                         }
-                    }
+                        Err(e) => {
+                            eprintln!("{e}");
+                            print!("{msg}");
+                        }
+                    },
                     None => print!("{}", msg),
                 }
             }
             Self::ClientError(_) | Self::ServerError(_) => {
                 let msg = format!("{} {};\n", dt.to_rfc3339(), self);
                 match CONFIG.error_log.as_ref() {
-                    Some(log) => {
-                        match OpenOptions::new().append(true).open(log) {
-                            Ok(fd) => {
-                                let mut writer = BufWriter::new(fd);
-                                writer.write_all(msg.as_bytes())?;
-                            },
-                            Err(e) => {
-                                eprintln!("{e}");
-                                eprint!("{msg}");
-                            },
+                    Some(log) => match OpenOptions::new().append(true).open(log) {
+                        Ok(fd) => {
+                            let mut writer = BufWriter::new(fd);
+                            writer.write_all(msg.as_bytes())?;
                         }
-                    }
+                        Err(e) => {
+                            eprintln!("{e}");
+                            eprint!("{msg}");
+                        }
+                    },
                     None => print!("{}", msg),
                 }
             }
@@ -110,18 +104,16 @@ where
         let dt: DateTime<Utc> = Utc::now();
         let msg = format!("{} {}\n", dt.to_rfc3339(), self);
         match CONFIG.error_log.as_ref() {
-            Some(log) => {
-                match OpenOptions::new().append(true).open(log) {
-                    Ok(fd) => {
-                        let mut writer = BufWriter::new(fd);
-                        writer.write_all(msg.as_bytes())?;
-                    },
-                    Err(e) => {
-                        eprintln!("{e}");
-                        eprint!("{msg}");
-                    },
+            Some(log) => match OpenOptions::new().append(true).open(log) {
+                Ok(fd) => {
+                    let mut writer = BufWriter::new(fd);
+                    writer.write_all(msg.as_bytes())?;
                 }
-            }
+                Err(e) => {
+                    eprintln!("{e}");
+                    eprint!("{msg}");
+                }
+            },
             None => eprint!("{}", msg),
         }
         Ok(())
