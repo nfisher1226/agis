@@ -104,7 +104,7 @@ impl Cgi {
             remote_addr: format!("{}", request.client_ip),
             request_uri: match request.query {
                 Some(q) => format!("{}?{}", &request.path, &q),
-                None => format!("{}", &request.path),
+                None => request.path.to_string(),
             },
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name),

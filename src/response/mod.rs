@@ -192,7 +192,7 @@ impl From<Request> for Response {
         };
         path.push(request_base);
         if path.is_dir() {
-            if !request.path.ends_with("/") {
+            if !request.path.ends_with('/') {
                 let mut path = request.path.clone();
                 path.push('/');
                 return Self::Redirect(PathBuf::from(path));

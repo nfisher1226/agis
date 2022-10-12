@@ -58,12 +58,12 @@ impl TryFrom<&TcpStream> for Request {
                 let content = match length {
                     0 => None,
                     length => {
-                        let mut buf = Vec::with_capacity(length);
+                        let mut buf = vec![0; length];
                         reader.read_exact(&mut buf)?;
                         Some(buf)
                     }
                 };
-                let url = urlencoding::decode(&parts[1])?;
+                let url = urlencoding::decode(parts[1])?;
                 let (mut path, query) = if let Some((p, q)) = url.split_once('?') {
                     (p.to_string(), Some(q.to_string()))
                 } else {
