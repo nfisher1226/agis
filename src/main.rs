@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     if uid != 0 {
         let prog = env!("CARGO_PKG_NAME");
         let prog = prog[0..1].to_uppercase() + &prog[1..];
-        eprintln!("{} must be started as the root user.", prog);
+        eprintln!("{prog} must be started as the root user.");
         process::exit(1);
     }
     let user = CONFIG.getpwnam()?;

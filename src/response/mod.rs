@@ -106,7 +106,7 @@ impl From<Request> for Response {
             None => return ServerError::NotFound.into(),
         };
         for (dir, directive) in &server.directories {
-            if PathBuf::from(&request.path).starts_with(&dir) {
+            if PathBuf::from(&request.path).starts_with(dir) {
                 match directive {
                     Directive::Allow(val) => {
                         if !val {

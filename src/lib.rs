@@ -74,7 +74,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
         if !log.exists() {
             println!("Creating access log");
             {
-                File::create(&log)?;
+                File::create(log)?;
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting access log permissions");
@@ -91,7 +91,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
         if !log.exists() {
             println!("Creating error log");
             {
-                File::create(&log)?;
+                File::create(log)?;
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting error log permissions");
