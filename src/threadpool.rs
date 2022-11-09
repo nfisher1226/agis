@@ -68,13 +68,9 @@ impl Worker {
         let thread = thread::spawn(move || loop {
             let message = receiver.lock().unwrap().recv().unwrap();
             match message {
-                Message::NewJob(job) => {
-                    //println!("\nWorker {} executing job.", id);
-                    job();
-                    //println!("Worker {} job complete.", id);
-                }
+                Message::NewJob(job) => job(),
                 Message::Terminate => {
-                    println!("Worker {} shutting down.", id);
+                    println!("Worker {id} shutting down.");
                     break;
                 }
             }

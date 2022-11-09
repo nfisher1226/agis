@@ -71,7 +71,10 @@ impl Cgi {
             request_uri: format!(
                 "{}{}",
                 &request.path,
-                request.query.as_ref().unwrap_or(&"".to_string())
+                request
+                    .query
+                    .as_ref()
+                    .map_or("", std::string::String::as_str)
             ),
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name.display()),
@@ -105,7 +108,7 @@ impl Cgi {
             query_string,
             remote_addr: format!("{}", request.client_ip),
             request_uri: match request.query {
-                Some(q) => format!("{}?{}", &request.path, &q),
+                Some(q) => format!("{}?{q}", &request.path),
                 None => request.path.to_string(),
             },
             script_filename: format!("{}", script_filename.display()),
@@ -125,7 +128,7 @@ impl Cgi {
                 let path = dir.path().join("body");
                 let mut fd = File::create(&path)?;
                 fd.write_all(body)?;
-                format!("{}", path.display())
+                path.display().to_string()
             }
             None => String::new(),
         };

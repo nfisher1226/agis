@@ -32,7 +32,9 @@ impl fmt::Display for Request {
             "Request: {{ host: {}; path: {}; query: {}; client_ip: {}; length: {}; }}",
             &self.host,
             &self.path,
-            self.query.as_ref().unwrap_or(&String::from("none")),
+            self.query
+                .as_ref()
+                .map_or("none", std::string::String::as_str),
             self.client_ip,
             self.length,
         )

@@ -1,6 +1,6 @@
 use {
     crate::CONFIG,
-    chrono::{DateTime, Utc},
+    chrono::Utc,
     std::{
         fmt::Display,
         fs::OpenOptions,
@@ -28,8 +28,8 @@ impl Log for std::string::String {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
-        let dt: DateTime<Utc> = Utc::now();
-        let msg = format!("{} {};\n", dt.to_rfc3339(), self);
+        let dt = Utc::now().to_rfc3339();
+        let msg = format!("{dt} {self};\n");
         match CONFIG.access_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
@@ -41,7 +41,7 @@ impl Log for std::string::String {
                     print!("{msg}");
                 }
             },
-            None => print!("{}", msg),
+            None => print!("{msg}"),
         }
         Ok(())
     }
@@ -51,14 +51,14 @@ impl Log for crate::Response {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
-        let dt: DateTime<Utc> = Utc::now();
+        let dt = Utc::now().to_rfc3339();
         match self {
             Self::Success {
                 mimetype: _,
                 body: _,
             }
             | Self::Redirect(_) => {
-                let msg = format!("{} {};\n", dt.to_rfc3339(), self);
+                let msg = format!("{dt} {self};\n");
                 match CONFIG.access_log.as_ref() {
                     Some(log) => match OpenOptions::new().append(true).open(log) {
                         Ok(fd) => {
@@ -70,11 +70,11 @@ impl Log for crate::Response {
                             print!("{msg}");
                         }
                     },
-                    None => print!("{}", msg),
+                    None => print!("{msg}"),
                 }
             }
             Self::ClientError(_) | Self::ServerError(_) => {
-                let msg = format!("{} {};\n", dt.to_rfc3339(), self);
+                let msg = format!("{dt} {self};\n");
                 match CONFIG.error_log.as_ref() {
                     Some(log) => match OpenOptions::new().append(true).open(log) {
                         Ok(fd) => {
@@ -86,7 +86,7 @@ impl Log for crate::Response {
                             eprint!("{msg}");
                         }
                     },
-                    None => print!("{}", msg),
+                    None => print!("{msg}"),
                 }
             }
         }
@@ -101,8 +101,8 @@ where
     type Error = io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
-        let dt: DateTime<Utc> = Utc::now();
-        let msg = format!("{} {}\n", dt.to_rfc3339(), self);
+        let dt = Utc::now().to_rfc3339();
+        let msg = format!("{dt} {self}\n");
         match CONFIG.error_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
@@ -114,7 +114,7 @@ where
                     eprint!("{msg}");
                 }
             },
-            None => eprint!("{}", msg),
+            None => eprint!("{msg}"),
         }
         Ok(())
     }

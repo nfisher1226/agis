@@ -26,7 +26,7 @@ impl fmt::Display for RequestError {
             Self::ExtraField => write!(f, "Extra field"),
             Self::InvalidContentLength => write!(f, "Invalid content length"),
             Self::InvalidUtf8 => write!(f, "Utf8 error"),
-            Self::ReadError(e) => write!(f, "Read error: {}", &e),
+            Self::ReadError(e) => write!(f, "Read error: {e}"),
         }
     }
 }
@@ -71,7 +71,7 @@ impl fmt::Display for ServerError {
             Self::NotFound => write!(f, "Resource not found"),
             Self::CgiError => write!(f, "Script failed"),
             Self::Unauthorized => write!(f, "Not authorized"),
-            Self::IoError(e) => write!(f, "Io error: {}", &e),
+            Self::IoError(e) => write!(f, "Io error: {e}"),
         }
     }
 }

@@ -44,11 +44,11 @@ impl fmt::Display for Response {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Success { mimetype, body: _ } => {
-                write!(f, "Response::Success({})", mimetype)
+                write!(f, "Response::Success({mimetype})")
             }
             Self::Redirect(path) => write!(f, "Response::Redirect({})", path.display()),
-            Self::ClientError(e) => write!(f, "Response::ClientError({})", &e),
-            Self::ServerError(e) => write!(f, "Response::ServerError({})", &e),
+            Self::ClientError(e) => write!(f, "Response::ClientError({e})"),
+            Self::ServerError(e) => write!(f, "Response::ServerError({e})"),
         }
     }
 }
@@ -57,20 +57,20 @@ impl From<Response> for Vec<u8> {
     fn from(response: Response) -> Self {
         match response {
             Response::Success { mimetype, mut body } => {
-                let mut buf = format!("2 {}\r\n", mimetype).into_bytes();
+                let mut buf = format!("2 {mimetype}\r\n").into_bytes();
                 buf.append(&mut body);
                 buf
             }
             Response::Redirect(path) => format!("3 {}\r\n", path.display()).into_bytes(),
-            Response::ClientError(e) => format!("4 {}\r\n", e).into_bytes(),
-            Response::ServerError(e) => format!("5 {}\r\n", e).into_bytes(),
+            Response::ClientError(e) => format!("4 {e}\r\n").into_bytes(),
+            Response::ServerError(e) => format!("5 {e}\r\n").into_bytes(),
         }
     }
 }
 
 impl From<PathBuf> for Response {
     fn from(dir: PathBuf) -> Response {
-        let contents = match fs::read_dir(&dir) {
+        let contents = match fs::read_dir(dir) {
             Ok(c) => c,
             Err(e) => return Self::ServerError(e.into()),
         };
@@ -87,7 +87,7 @@ impl From<PathBuf> for Response {
                     return Self::ServerError(err.into());
                 }
             };
-            if let Err(e) = writeln!(body, "=> {}", entry) {
+            if let Err(e) = writeln!(body, "=> {entry}") {
                 let err = io::Error::new(ErrorKind::Other, e);
                 return Self::ServerError(err.into());
             }
