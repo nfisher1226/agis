@@ -35,6 +35,7 @@ impl Drop for ThreadPool {
 }
 
 impl ThreadPool {
+    #[must_use]
     /// Starts up the thread pool
     pub fn new(size: NonZeroUsize) -> Self {
         let (sender, receiver) = mpsc::channel();
@@ -47,6 +48,8 @@ impl ThreadPool {
     }
 
     /// Passes a job off to the worker
+    /// # Panics
+    /// The thread will panic if message passing fails
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,

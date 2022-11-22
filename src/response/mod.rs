@@ -80,12 +80,11 @@ impl From<PathBuf> for Response {
                 Ok(e) => e,
                 Err(e) => return Self::ServerError(e.into()),
             };
-            let entry = match entry.file_name().to_os_string().to_str() {
-                Some(e) => e.to_string(),
-                None => {
-                    let err = io::Error::new(ErrorKind::Other, "Invalid pathname");
-                    return Self::ServerError(err.into());
-                }
+            let entry = if let Some(e) = entry.file_name().to_str() {
+                e.to_string()
+            } else {
+                let err = io::Error::new(ErrorKind::Other, "Invalid pathname");
+                return Self::ServerError(err.into());
             };
             if let Err(e) = writeln!(body, "=> {entry}") {
                 let err = io::Error::new(ErrorKind::Other, e);
@@ -142,42 +141,14 @@ impl From<Request> for Response {
                             Ok(c) => c,
                             Err(e) => return e.into(),
                         };
-                        match cgi.run() {
-                            Ok(output) => {
-                                let idx = match output.stdout.iter().position(|&x| x == b'\n') {
-                                    Some(i) => i,
-                                    None => return ServerError::CgiError.into(),
-                                };
-                                let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
-                                let body = Vec::from(&output.stdout[idx + 1..]);
-                                return Self::Success {
-                                    mimetype: mimetype.to_string(),
-                                    body,
-                                };
-                            }
-                            Err(_) => return ServerError::CgiError.into(),
-                        }
+                        return cgi.into();
                     }
                     Directive::ScriptAlias(script) => {
                         let cgi = match Cgi::from_script_alias(request, server, script) {
                             Ok(c) => c,
                             Err(e) => return e.into(),
                         };
-                        match cgi.run() {
-                            Ok(output) => {
-                                let idx = match output.stdout.iter().position(|&x| x == b'\n') {
-                                    Some(i) => i,
-                                    None => return ServerError::CgiError.into(),
-                                };
-                                let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
-                                let body = Vec::from(&output.stdout[idx + 1..]);
-                                return Self::Success {
-                                    mimetype: mimetype.to_string(),
-                                    body,
-                                };
-                            }
-                            Err(_) => return ServerError::CgiError.into(),
-                        }
+                        return cgi.into();
                     }
                 }
             }
@@ -208,18 +179,15 @@ impl From<Request> for Response {
             Err(e) => return Self::ServerError(e.into()),
         };
         let mut reader = BufReader::new(fd);
-        let mut buf = vec![];
-        if let Err(e) = reader.read_to_end(&mut buf) {
+        let mut body = vec![];
+        if let Err(e) = reader.read_to_end(&mut body) {
             return Self::ServerError(e.into());
         }
         let mimetype = match path.extension() {
             Some(ext) if ext == "gmi" => "text/gemini",
-            _ => tree_magic_mini::from_u8(&buf),
+            _ => tree_magic_mini::from_u8(&body),
         }
         .to_string();
-        Self::Success {
-            mimetype,
-            body: buf,
-        }
+        Self::Success { mimetype, body }
     }
 }

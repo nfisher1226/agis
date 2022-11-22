@@ -3,21 +3,23 @@
 //! and the addition of the ability to handle a request body saved to a temporary
 //! file. The CGI environment variables which are passed to the program are as
 //! follows:
-//! - DOCUMENT_ROOT is the document root of the virtual host serving this request.
-//! - QUERY_STRING is the portion of the request following the '?' character,
+//! - `DOCUMENT_ROOT` is the document root of the virtual host serving this request.
+//! - `QUERY_STRING` is the portion of the request following the '?' character,
 //!   useful for setting additional variables.
-//! - REMOTE_ADDR is the ip address of the client making the request
-//! - REQUEST_URI is the interpreted pathname of the requested document or CGI
+//! - `REMOTE_ADDR` is the ip address of the client making the request
+//! - `REQUEST_URI` is the interpreted pathname of the requested document or CGI
 //!   (relative to the document root).
-//! - SCRIPT_FILENAME is the full filesystem path to the CGI program
-//! - SCRIPT_NAME is the interpreted pathname of the current CGI (relative to
+//! - `SCRIPT_FILENAME` is the full filesystem path to the CGI program
+//! - `SCRIPT_NAME` is the interpreted pathname of the current CGI (relative to
 //!   the document root).
-//! - SERVER_NAME is the server's fully qualified domain name.
-//! - SERVER_SOFTWARE is the name and version string of this server.
-//! - REQUEST_BODY is the path to a temporary file which contains the request
+//! - `SERVER_NAME` is the server's fully qualified domain name.
+//! - `SERVER_SOFTWARE` is the name and version string of this server.
+//! - `REQUEST_BODY` is the path to a temporary file which contains the request
 //!   body. This variable will be an empty string if there was no request body.
 //!   The file that it points to may contain any arbitrary data and should as
 //!   such be treated as untrusted input.
+
+use super::Response;
 use {
     super::Request,
     crate::{config::Server, response::ServerError, CONFIG},
@@ -45,6 +47,8 @@ pub struct Cgi {
 
 impl Cgi {
     /// Constructs the Cgi struct from a `Request`, `Server` and a path
+    /// # Errors
+    /// Returns a `ServerError` if unable to get the CGI path
     pub fn new(request: Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
         let base = match PathBuf::from(&request.path).strip_prefix(dir) {
             Ok(b) => b.to_path_buf(),
@@ -87,6 +91,9 @@ impl Cgi {
 
     /// Formulates a `Response` from the output of a CGI script which has been
     /// aliased to a path
+    /// # Errors
+    /// Returns a `ServerError` if unable to get the script file name from the
+    /// script alias
     pub fn from_script_alias(
         request: Request,
         server: &Server,
@@ -112,7 +119,7 @@ impl Cgi {
                 None => request.path.to_string(),
             },
             script_filename: format!("{}", script_filename.display()),
-            script_name: format!("{}", script_name),
+            script_name: format!("{script_name}"),
             server_name: server.name.clone(),
             server_port: CONFIG.address.port.clone(),
             server_software,
@@ -121,6 +128,10 @@ impl Cgi {
     }
 
     /// Runs the CGI program and returns it's output
+    /// # Errors
+    /// Returns error if:
+    /// - Unable to create the tempdir or tempfile
+    /// - The cgi script returns an error
     pub fn run(&self) -> io::Result<Output> {
         let dir = tempfile::tempdir()?;
         let tmpfile = match self.body.as_ref() {
@@ -148,5 +159,25 @@ impl Cgi {
                 ("REQUEST_BODY", &tmpfile),
             ])
             .output()
+    }
+}
+
+impl From<Cgi> for Response {
+    fn from(cgi: Cgi) -> Self {
+        match cgi.run() {
+            Ok(output) => {
+                let idx = match output.stdout.iter().position(|&x| x == b'\n') {
+                    Some(i) => i,
+                    None => return ServerError::CgiError.into(),
+                };
+                let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
+                let body = Vec::from(&output.stdout[idx + 1..]);
+                Self::Success {
+                    mimetype: mimetype.to_string(),
+                    body,
+                }
+            }
+            Err(_) => ServerError::CgiError.into(),
+        }
     }
 }

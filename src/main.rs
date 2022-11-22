@@ -2,7 +2,14 @@
 
 use {
     agis::CONFIG,
-    std::{env, net::TcpListener, num::NonZeroUsize, sync::{Arc, Mutex}, process, thread},
+    std::{
+        env,
+        net::TcpListener,
+        num::NonZeroUsize,
+        process,
+        sync::{Arc, Mutex},
+        thread,
+    },
 };
 
 fn main() -> std::io::Result<()> {

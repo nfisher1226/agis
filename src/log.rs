@@ -1,3 +1,4 @@
+#![allow(clippy::module_name_repetitions)]
 use {
     crate::CONFIG,
     chrono::Utc,
@@ -13,6 +14,9 @@ pub trait Log {
     type Error;
 
     /// Writes server access to either the configured access log or stdout
+    /// # Errors
+    /// Returns an error (usually an `io::Error`) if unable to write to the
+    /// log file
     fn log(&self) -> Result<(), Self::Error>;
 }
 
@@ -21,6 +25,9 @@ pub trait LogError {
     type Error;
 
     /// Writes errors to either the configured error log or stderr
+    /// # Errors
+    /// Returns an error (usually an `io::Error`) if unable to write to the
+    /// log file
     fn log_err(&self) -> Result<(), Self::Error>;
 }
 

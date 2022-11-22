@@ -48,6 +48,8 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| match Config::load() {
 /// methods will return an error if the user and group referred to in your
 /// config.ron do not exist on the system, this function should not do dangerous
 /// things.
+/// # Errors
+/// Returns the last OS error if setting the correct user or group permissions fail
 pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> io::Result<()> {
     if libc::setgid((*group).gr_gid) != 0 {
         eprintln!("privdrop: Unable to setgid of group: {}", &CONFIG.group);
@@ -64,7 +66,11 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> io::
 /// # Safety
 /// This function uses a number of unsafe libc interfaces. It is only called at
 /// startup time, and the unsafe code only runs if either log is missing.
-pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Error> {
+/// # Errors
+/// Returns an error if
+/// * Unable to create logging directory
+/// * Unable to create access or error log files
+pub unsafe fn init_logs(user: libc::uid_t, group: libc::gid_t) -> Result<(), io::Error> {
     if let Some(log) = CONFIG.access_log.as_ref() {
         if let Some(parent) = log.parent() {
             if !parent.exists() {
@@ -79,7 +85,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting access log permissions");
-            _ = libc::chown(logstr.as_ptr(), uid, gid);
+            _ = libc::chown(logstr.as_ptr(), user, group);
         }
     }
     if let Some(log) = CONFIG.error_log.as_ref() {
@@ -96,7 +102,7 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
             }
             let logstr = CString::new(log.clone().as_os_str().as_bytes())?;
             println!("Setting error log permissions");
-            _ = libc::chown(logstr.as_ptr(), uid, gid);
+            _ = libc::chown(logstr.as_ptr(), user, group);
         }
     }
     Ok(())
@@ -104,6 +110,10 @@ pub unsafe fn init_logs(uid: libc::uid_t, gid: libc::gid_t) -> Result<(), io::Er
 
 /// Attempts to parse a `Request` from the stream and to formulate
 /// a `Response` based upon that input.
+/// # Errors
+/// Returns an `io::Error` if:
+/// * Unable to log an error
+/// * Unable to write to the `TcpStream` successfully
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
     let (request, response) = match Request::try_from(&stream) {
         Ok(request) => (request.to_string(), Response::from(request)),
@@ -130,6 +140,8 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), io::Error> {
 }
 
 /// Collects and parses command line arguments
+/// # Errors
+/// Returns `getopt::Fail` if unable to parse options
 pub fn options() -> Result<Matches, Fail> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();

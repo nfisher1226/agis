@@ -1,4 +1,4 @@
-#![allow(clippy::unsafe_derive_deserialize)]
+#![allow(clippy::unsafe_derive_deserialize, clippy::module_name_repetitions)]
 use {
     serde::Deserialize,
     std::{
@@ -72,6 +72,8 @@ impl Config {
     /// Loads the server configuration from file
     /// # Errors
     /// Returns an `io::Error` if the file cannot be read or if it is invalid
+    /// # Panics
+    /// Will panic if unable to get the command line options
     pub fn load() -> Result<Self, Error> {
         let opts = crate::options().unwrap();
         let cfg = opts
