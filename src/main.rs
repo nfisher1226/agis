@@ -2,7 +2,7 @@
 
 use {
     agis::CONFIG,
-    std::{env, net::TcpListener, num::NonZeroUsize, process, thread},
+    std::{env, net::TcpListener, num::NonZeroUsize, sync::{Arc, Mutex}, process, thread},
 };
 
 fn main() -> std::io::Result<()> {
@@ -22,9 +22,10 @@ fn main() -> std::io::Result<()> {
     }
     let user = CONFIG.getpwnam()?;
     let group = CONFIG.getgrnam()?;
+
     println!("Starting up thread pool");
     let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
-    let pool = agis::ThreadPool::new(threads);
+    let pool = Arc::new(Mutex::new(agis::ThreadPool::new(threads)));
     let listener = TcpListener::bind(format!("{}:{}", CONFIG.address.ip, CONFIG.address.port))?;
     println!(
         "Binding to address {} on port {}.",
@@ -48,25 +49,29 @@ fn main() -> std::io::Result<()> {
     }
     println!("Privileges dropped, listening for incoming connections.");
     if let Some(ls) = listener1 {
+        let pool = Arc::clone(&pool);
         thread::spawn(move || {
-            let pool = agis::ThreadPool::new(threads);
             for stream in ls.incoming() {
                 let stream = stream.unwrap();
-                pool.execute(|| {
-                    if let Err(e) = agis::handle_connection(stream) {
-                        eprintln!("{e}");
-                    }
-                });
+                if let Ok(pool) = pool.try_lock() {
+                    pool.execute(|| {
+                        if let Err(e) = agis::handle_connection(stream) {
+                            eprintln!("{e}");
+                        }
+                    });
+                }
             }
         });
     }
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        pool.execute(|| {
-            if let Err(e) = agis::handle_connection(stream) {
-                eprintln!("{e}");
-            }
-        });
+        if let Ok(pool) = pool.try_lock() {
+            pool.execute(|| {
+                if let Err(e) = agis::handle_connection(stream) {
+                    eprintln!("{e}");
+                }
+            });
+        }
     }
     Ok(())
 }
