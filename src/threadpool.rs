@@ -4,6 +4,8 @@ use std::{
     thread,
 };
 
+use crate::log::Log;
+
 /// A pool of worker threads to handle requests
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -57,6 +59,24 @@ impl ThreadPool {
         let job = Box::new(f);
         self.sender.send(Message::NewJob(job)).unwrap();
     }
+
+    /// Shuts down the threadpool when finished
+    /// # Panics
+    /// The threads will panic rather than shut down cleanly if message passing
+    /// fails
+    pub fn shutdown(&mut self) {
+        let _msg = "Sending terminate message to all workers".to_string().log();
+        for _ in &self.workers {
+            self.sender.send(Message::Terminate).unwrap();
+        }
+        let _msg = "Shutting down all workers".to_string().log();
+        for worker in &mut self.workers {
+            let _msg = format!("Dropping worker {}", worker.id).log();
+            if let Some(thread) = worker.thread.take() {
+                thread.join().unwrap();
+            }
+        }
+    }
 }
 
 /// A worker thread
@@ -73,7 +93,7 @@ impl Worker {
             match message {
                 Message::NewJob(job) => job(),
                 Message::Terminate => {
-                    println!("Worker {id} shutting down.");
+                    let _msg = format!("Worker {id} shutting down").log();
                     break;
                 }
             }

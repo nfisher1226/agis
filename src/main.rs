@@ -1,13 +1,13 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 use {
-    agis::CONFIG,
+    agis::{log::Log, CONFIG},
     std::{
         env,
         net::TcpListener,
         num::NonZeroUsize,
         process,
-        sync::{Arc, Mutex},
+        sync::{mpsc::channel, Arc, Mutex},
         thread,
     },
 };
@@ -30,20 +30,21 @@ fn main() -> std::io::Result<()> {
     let user = CONFIG.getpwnam()?;
     let group = CONFIG.getgrnam()?;
 
-    println!("Starting up thread pool");
+    let _msg = "Starting up thread pool".to_string().log();
     let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
     let pool = Arc::new(Mutex::new(agis::ThreadPool::new(threads)));
     let listener = TcpListener::bind(format!("{}:{}", CONFIG.address.ip, CONFIG.address.port))?;
-    println!(
-        "Binding to address {} on port {}.",
+    let _msg = format!(
+        "Binding to address {} on port {}",
         CONFIG.address.ip, CONFIG.address.port
-    );
+    )
+    .log();
     // We can optionally start up a second listener, useful if we want to listen
     // on a second interface *or* listen to ipv4 and ipv6 simultaneously
     let listener1 = match CONFIG.address1 {
         Some(ref a) => {
             let l = TcpListener::bind(format!("{}:{}", a.ip, a.port))?;
-            println!("Binding to address {} on port {}.", a.ip, a.port);
+            let _msg = format!("Binding to address {} on port {}", a.ip, a.port).log();
             Some(l)
         }
         None => None,
@@ -54,7 +55,7 @@ fn main() -> std::io::Result<()> {
         agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;
     }
-    println!("Privileges dropped, listening for incoming connections.");
+    let _msg = "Privileges dropped, listening for incoming connections".to_string().log();
     if let Some(ls) = listener1 {
         let pool = Arc::clone(&pool);
         thread::spawn(move || {
@@ -70,15 +71,30 @@ fn main() -> std::io::Result<()> {
             }
         });
     }
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        if let Ok(pool) = pool.try_lock() {
-            pool.execute(|| {
-                if let Err(e) = agis::handle_connection(stream) {
-                    eprintln!("{e}");
+    {
+        let pool = Arc::clone(&pool);
+        thread::spawn(move || {
+            for stream in listener.incoming() {
+                let stream = stream.unwrap();
+                if let Ok(pool) = pool.try_lock() {
+                    pool.execute(|| {
+                        if let Err(e) = agis::handle_connection(stream) {
+                            eprintln!("{e}");
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
+    }
+    let (tx, rx) = channel();
+    ctrlc::set_handler(move || {
+        tx.send(()).expect("Cannot send termination signal");
+    })
+    .expect("Cannot set signal handler");
+    rx.recv()
+        .expect("Could not receive message through channel");
+    if let Ok(mut pool) = pool.try_lock() {
+        pool.shutdown();
     }
     Ok(())
 }

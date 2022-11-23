@@ -1,6 +1,6 @@
 [package]
 name = "agis"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "A Spartan protocol server"
 authors = ["Nathan Fisher"]
@@ -20,6 +20,10 @@ ron = "0.8"
 tempfile = "3.3"
 tree_magic_mini = "3.0"
 urlencoding = "2.1"
+
+[dependencies.ctrlc]
+version = "3.2"
+features = ["termination"]
 
 [dependencies.serde]
 version = "1.0"
