@@ -56,8 +56,6 @@ to match your actual desired configuration.
 - error_log - See access_log for specifics. Logs errors either to stderr or file.
 - vhosts - One or more name based virtual hosts.
 
-> Note: Binding to a second address will double the number of worker threads.
-
 ### Fields (per Vhost)
 Each vhost is looked up by a key, which is the domain name it will serve.
 - name - The domain name for which to serve requests.
