@@ -1,7 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 use {
-    agis::{log::Log, CONFIG},
+    agis::{log::{Log, LogError}, CONFIG},
     std::{
         env,
         net::TcpListener,
@@ -60,11 +60,21 @@ fn main() -> std::io::Result<()> {
         let pool = Arc::clone(&pool);
         thread::spawn(move || {
             for stream in ls.incoming() {
-                let stream = stream.unwrap();
+                let stream = match stream {
+                    Ok(s) => s,
+                    Err(e) => {
+                        if let Err(e) = e.log_err() {
+                            eprintln!("{e}");
+                        }
+                        continue;
+                    },
+                };
                 if let Ok(pool) = pool.try_lock() {
                     pool.execute(|| {
                         if let Err(e) = agis::handle_connection(stream) {
-                            eprintln!("{e}");
+                            if let Err(e) = e.log_err() {
+                                eprintln!("{e}");
+                            }
                         }
                     });
                 }
@@ -75,11 +85,21 @@ fn main() -> std::io::Result<()> {
         let pool = Arc::clone(&pool);
         thread::spawn(move || {
             for stream in listener.incoming() {
-                let stream = stream.unwrap();
+                let stream = match stream {
+                    Ok(s) => s,
+                    Err(e) => {
+                        if let Err(e) = e.log_err() {
+                            eprintln!("{e}");
+                        }
+                        continue;
+                    },
+                };
                 if let Ok(pool) = pool.try_lock() {
                     pool.execute(|| {
                         if let Err(e) = agis::handle_connection(stream) {
-                            eprintln!("{e}");
+                            if let Err(e) = e.log_err() {
+                                eprintln!("{e}");
+                            }
                         }
                     });
                 }
