@@ -92,12 +92,16 @@ impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
         let thread = thread::spawn(move || loop {
             match receiver.try_lock().map(|x| x.recv()) {
-                Err(e) => if let Err(e) = e.log_err() {
-                    eprintln!("{e}");
-                },
-                Ok(Err(e)) => if let Err(e) = e.log_err() {
-                    eprintln!("{e}");
-                },
+                Err(e) => {
+                    if let Err(e) = e.log_err() {
+                        eprintln!("{e}");
+                    }
+                }
+                Ok(Err(e)) => {
+                    if let Err(e) = e.log_err() {
+                        eprintln!("{e}");
+                    }
+                }
                 Ok(Ok(message)) => match message {
                     Message::NewJob(job) => job(),
                     Message::Terminate => {
@@ -106,7 +110,7 @@ impl Worker {
                         }
                         break;
                     }
-                }
+                },
             }
         });
         Self {

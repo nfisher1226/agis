@@ -147,6 +147,7 @@ pub fn options() -> Result<Matches, Fail> {
     let mut opts = Options::new();
     opts.optopt("c", "config", "Use NAME as config file", "NAME");
     opts.optflag("h", "help", "Print this help menu");
+    opts.optflag("v", "version", "Print the program version");
     opts.parse(&args[1..])
 }
 
@@ -163,10 +164,17 @@ pub fn usage() {
         -h, --help\n        \
         Print help information\n\
         \n\
+        -v, --version\n        \
+        Print the program version\n\
+        \n\
         -c, --config <config>\n        \
-        Usae <config> as the config file";
+        Use <config> as the config file";
     let ustr = ustr
         .replace("_PROGNAME_", env!("CARGO_PKG_NAME"))
         .replace("_VERSION_", env!("CARGO_PKG_VERSION"));
     println!("{ustr}");
+}
+
+pub fn version() {
+    println!("{}", env!("CARGO_PKG_VERSION"));
 }

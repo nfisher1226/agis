@@ -17,9 +17,20 @@ use {
 
 fn main() -> std::io::Result<()> {
     // Get any CLI flags
-    let matches = agis::options().unwrap();
+    let matches = match agis::options() {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("{e}\n");
+            agis::usage();
+            process::exit(1);
+        }
+    };
     if matches.opt_present("h") {
         agis::usage();
+        process::exit(0);
+    }
+    if matches.opt_present("v") {
+        agis::version();
         process::exit(0);
     }
     // Make sure we're starting as root
