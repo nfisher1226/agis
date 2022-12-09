@@ -12,7 +12,7 @@ use {
         fmt::{self, Write},
         fs::{self, File},
         io::{self, BufReader, ErrorKind, Read},
-        path::{Path, PathBuf},
+        path::PathBuf,
     },
 };
 
@@ -113,15 +113,12 @@ impl From<Request> for Response {
                         }
                     }
                     Directive::Alias(path) => {
+                        // Unwrap should be fine here, as we've already determined that
+                        // our path variable begins with dir
                         let children = PathBuf::from(&request.path)
                             .strip_prefix(dir)
-                            .map(Path::to_path_buf)
+                            .map(|x| x.strip_prefix("/").unwrap_or(x).to_path_buf())
                             .unwrap();
-                        let children = if children.starts_with("/") {
-                            children.strip_prefix("/").map(Path::to_path_buf).unwrap()
-                        } else {
-                            children
-                        };
                         let mut path = PathBuf::from(path);
                         path.push(children);
                         let path = path.to_string_lossy().to_string();

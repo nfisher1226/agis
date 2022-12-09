@@ -1,7 +1,10 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 use {
-    agis::{log::{Log, LogError}, CONFIG},
+    agis::{
+        log::{Log, LogError},
+        CONFIG,
+    },
     std::{
         env,
         net::TcpListener,
@@ -55,7 +58,9 @@ fn main() -> std::io::Result<()> {
         agis::init_logs((*user).pw_uid, (*group).gr_gid)?;
         agis::privdrop(user, group)?;
     }
-    let _msg = "Privileges dropped, listening for incoming connections".to_string().log();
+    let _msg = "Privileges dropped, listening for incoming connections"
+        .to_string()
+        .log();
     if let Some(ls) = listener1 {
         let pool = Arc::clone(&pool);
         thread::spawn(move || {
@@ -67,7 +72,7 @@ fn main() -> std::io::Result<()> {
                             eprintln!("{e}");
                         }
                         continue;
-                    },
+                    }
                 };
                 if let Ok(pool) = pool.try_lock() {
                     pool.execute(|| {
@@ -92,7 +97,7 @@ fn main() -> std::io::Result<()> {
                             eprintln!("{e}");
                         }
                         continue;
-                    },
+                    }
                 };
                 if let Ok(pool) = pool.try_lock() {
                     pool.execute(|| {

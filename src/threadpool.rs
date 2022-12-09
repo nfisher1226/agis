@@ -4,7 +4,7 @@ use std::{
     thread,
 };
 
-use crate::log::Log;
+use crate::log::{Log, LogError};
 
 /// A pool of worker threads to handle requests
 pub struct ThreadPool {
@@ -50,14 +50,16 @@ impl ThreadPool {
     }
 
     /// Passes a job off to the worker
-    /// # Panics
-    /// The thread will panic if message passing fails
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
-        self.sender.send(Message::NewJob(job)).unwrap();
+        if let Err(e) = self.sender.send(Message::NewJob(job)) {
+            if let Err(e) = e.log_err() {
+                eprintln!("{e}");
+            }
+        }
     }
 
     /// Shuts down the threadpool when finished
@@ -89,12 +91,13 @@ impl Worker {
     /// Creates a new worker thread for the pool
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
         let thread = thread::spawn(move || loop {
-            let message = receiver.lock().unwrap().recv().unwrap();
-            match message {
-                Message::NewJob(job) => job(),
-                Message::Terminate => {
-                    let _msg = format!("Worker {id} shutting down").log();
-                    break;
+            if let Ok(Ok(message)) = receiver.try_lock().map(|x| x.recv()) {
+                match message {
+                    Message::NewJob(job) => job(),
+                    Message::Terminate => {
+                        let _msg = format!("Worker {id} shutting down").log();
+                        break;
+                    }
                 }
             }
         });
