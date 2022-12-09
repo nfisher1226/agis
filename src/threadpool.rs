@@ -91,11 +91,19 @@ impl Worker {
     /// Creates a new worker thread for the pool
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
         let thread = thread::spawn(move || loop {
-            if let Ok(Ok(message)) = receiver.try_lock().map(|x| x.recv()) {
-                match message {
+            match receiver.try_lock().map(|x| x.recv()) {
+                Err(e) => if let Err(e) = e.log_err() {
+                    eprintln!("{e}");
+                },
+                Ok(Err(e)) => if let Err(e) = e.log_err() {
+                    eprintln!("{e}");
+                },
+                Ok(Ok(message)) => match message {
                     Message::NewJob(job) => job(),
                     Message::Terminate => {
-                        let _msg = format!("Worker {id} shutting down").log();
+                        if let Err(e) = format!("Worker {id} shutting down").log() {
+                            eprintln!("{e}");
+                        }
                         break;
                     }
                 }
