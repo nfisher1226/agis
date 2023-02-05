@@ -1,8 +1,17 @@
 Contents
 ========
+[0.5.0](#0.5.0)
 [0.4.0](#0.4.0)
 [0.3.0](#0.3.0)
 [0.2.0](#0.2.0)
+
+# 0.5.0
+- Only allow worker threads to panick during shutdown, otherwise log any message
+passing errors in the error log
+- Don't use `unwrap()` on incoming streams. Instead, if the incoming stream is in
+an error condition, log it in the error log
+- Add `version` command line option
+- Print any errors in parsing cli options to stderr and print `usage`
 
 # 0.4.0
 - Ability to override config file location on the command line
