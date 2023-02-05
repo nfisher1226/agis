@@ -91,7 +91,10 @@ impl Worker {
     /// Creates a new worker thread for the pool
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Self {
         let thread = thread::spawn(move || loop {
-            match receiver.try_lock().map(|x| x.recv()) {
+            // Using `try_lock` here causes misbehavior, at least with musl libc,
+            // as the call **thinks** it would block. This can fill the error log
+            // quickly with spam
+            match receiver.lock().map(|x| x.recv()) {
                 Err(e) => {
                     if let Err(e) = e.log_err() {
                         eprintln!("{e}");
