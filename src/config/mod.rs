@@ -7,6 +7,7 @@ use {
         fs,
         io::{Error, ErrorKind},
         path::PathBuf,
+        process,
     },
 };
 
@@ -75,7 +76,14 @@ impl Config {
     /// # Panics
     /// Will panic if unable to get the command line options
     pub fn load() -> Result<Self, Error> {
-        let opts = crate::options().unwrap();
+        let opts = match crate::options() {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("{e}\n");
+                crate::usage();
+                process::exit(1);
+            }
+        };
         let cfg = opts
             .opt_str("c")
             .unwrap_or_else(|| "/etc/agis/config.ron".to_string());

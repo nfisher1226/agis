@@ -100,9 +100,8 @@ impl From<PathBuf> for Response {
 
 impl From<Request> for Response {
     fn from(request: Request) -> Self {
-        let server = match CONFIG.vhosts.get(&request.host) {
-            Some(s) => s,
-            None => return ServerError::NotFound.into(),
+        let Some(server) = CONFIG.vhosts.get(&request.host) else {
+            return ServerError::NotFound.into();
         };
         for (dir, directive) in &server.directories {
             if PathBuf::from(&request.path).starts_with(dir) {

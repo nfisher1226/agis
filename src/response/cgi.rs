@@ -55,9 +55,8 @@ impl Cgi {
             Err(_) => return Err(ServerError::CgiError),
         };
         let mut parts = base.components();
-        let script_base = match parts.next() {
-            Some(s) => s,
-            None => return Err(ServerError::CgiError),
+        let Some(script_base) = parts.next() else {
+            return Err(ServerError::CgiError);
         };
         let mut script_name = dir.to_path_buf();
         script_name.push(script_base);
@@ -166,9 +165,8 @@ impl From<Cgi> for Response {
     fn from(cgi: Cgi) -> Self {
         match cgi.run() {
             Ok(output) => {
-                let idx = match output.stdout.iter().position(|&x| x == b'\n') {
-                    Some(i) => i,
-                    None => return ServerError::CgiError.into(),
+                let Some(idx) = output.stdout.iter().position(|&x| x == b'\n') else {
+                    return ServerError::CgiError.into();
                 };
                 let mimetype = String::from_utf8_lossy(&output.stdout[0..idx]);
                 let body = Vec::from(&output.stdout[idx + 1..]);

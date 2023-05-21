@@ -148,7 +148,16 @@ pub fn options() -> Result<Matches, Fail> {
     opts.optopt("c", "config", "Use NAME as config file", "NAME");
     opts.optflag("h", "help", "Print this help menu");
     opts.optflag("v", "version", "Print the program version");
-    opts.parse(&args[1..])
+    let opts = opts.parse(&args[1..])?;
+    if opts.opt_present("h") {
+        usage();
+        process::exit(0);
+    }
+    if opts.opt_present("v") {
+        version();
+        process::exit(0);
+    }
+    Ok(opts)
 }
 
 /// Formulates a Usage string and prints it to stdout
@@ -175,6 +184,6 @@ pub fn usage() {
     println!("{ustr}");
 }
 
-pub fn version() {
+fn version() {
     println!("{}", env!("CARGO_PKG_VERSION"));
 }
