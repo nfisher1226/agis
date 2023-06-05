@@ -17,7 +17,6 @@ pub mod threadpool;
 use {
     getopts::{Fail, Matches, Options},
     log::{Log, LogError},
-    once_cell::sync::Lazy,
     response::Response,
     std::{
         env,
@@ -27,18 +26,23 @@ use {
         net::TcpStream,
         os::unix::prelude::OsStrExt,
         process,
+        sync::OnceLock,
     },
 };
 
 pub use {config::Config, request::Request, threadpool::ThreadPool};
 
-pub static CONFIG: Lazy<Config> = Lazy::new(|| match Config::load() {
-    Ok(c) => c,
-    Err(e) => {
-        eprintln!("Unable to load config: {e}");
-        process::exit(1);
-    }
-});
+pub static CFG: OnceLock<Config> = OnceLock::new();
+
+pub fn load_config() -> &'static Config {
+    CFG.get_or_init(|| match Config::load() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Unable to load config: {e}");
+            process::exit(1);
+        }
+    })
+}
 
 /// Drops priviledges after starting the server
 /// # Safety
@@ -51,12 +55,13 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| match Config::load() {
 /// # Errors
 /// Returns the last OS error if setting the correct user or group permissions fail
 pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> io::Result<()> {
+    let cfg = load_config();
     if libc::setgid((*group).gr_gid) != 0 {
-        eprintln!("privdrop: Unable to setgid of group: {}", &CONFIG.group);
+        eprintln!("privdrop: Unable to setgid of group: {}", &cfg.group);
         return Err(std::io::Error::last_os_error());
     }
     if libc::setuid((*user).pw_uid) != 0 {
-        eprintln!("privdrop: Unable to setuid of user: {}", &CONFIG.user);
+        eprintln!("privdrop: Unable to setuid of user: {}", &cfg.user);
         return Err(std::io::Error::last_os_error());
     }
     Ok(())
@@ -71,7 +76,8 @@ pub unsafe fn privdrop(user: *mut libc::passwd, group: *mut libc::group) -> io::
 /// * Unable to create logging directory
 /// * Unable to create access or error log files
 pub unsafe fn init_logs(user: libc::uid_t, group: libc::gid_t) -> Result<(), io::Error> {
-    if let Some(log) = CONFIG.access_log.as_ref() {
+    let cfg = load_config();
+    if let Some(log) = cfg.access_log.as_ref() {
         if let Some(parent) = log.parent() {
             if !parent.exists() {
                 println!("Creating log directory");
@@ -88,7 +94,7 @@ pub unsafe fn init_logs(user: libc::uid_t, group: libc::gid_t) -> Result<(), io:
             _ = libc::chown(logstr.as_ptr(), user, group);
         }
     }
-    if let Some(log) = CONFIG.error_log.as_ref() {
+    if let Some(log) = cfg.error_log.as_ref() {
         if let Some(parent) = log.parent() {
             if !parent.exists() {
                 println!("Creating log directory");

@@ -1,6 +1,5 @@
 #![allow(clippy::module_name_repetitions)]
 use {
-    crate::CONFIG,
     chrono::Utc,
     std::{
         fmt::Display,
@@ -35,9 +34,10 @@ impl Log for std::string::String {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
+        let cfg = crate::load_config();
         let dt = Utc::now().to_rfc3339();
         let msg = format!("{dt} {self};\n");
-        match CONFIG.access_log.as_ref() {
+        match cfg.access_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
                     let mut writer = BufWriter::new(fd);
@@ -58,6 +58,7 @@ impl Log for crate::Response {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
+        let cfg = crate::load_config();
         let dt = Utc::now().to_rfc3339();
         match self {
             Self::Success {
@@ -66,7 +67,7 @@ impl Log for crate::Response {
             }
             | Self::Redirect(_) => {
                 let msg = format!("{dt} {self};\n");
-                match CONFIG.access_log.as_ref() {
+                match cfg.access_log.as_ref() {
                     Some(log) => match OpenOptions::new().append(true).open(log) {
                         Ok(fd) => {
                             let mut writer = BufWriter::new(fd);
@@ -93,9 +94,10 @@ where
     type Error = io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
+        let cfg = crate::load_config();
         let dt = Utc::now().to_rfc3339();
         let msg = format!("{dt} {self}\n");
-        match CONFIG.error_log.as_ref() {
+        match cfg.error_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
                     let mut writer = BufWriter::new(fd);

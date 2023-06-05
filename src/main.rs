@@ -1,10 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 
 use {
-    agis::{
-        log::{Log, LogError},
-        CONFIG,
-    },
+    agis::log::{Log, LogError},
     std::{
         env,
         net::TcpListener,
@@ -24,21 +21,22 @@ fn main() -> std::io::Result<()> {
         eprintln!("{prog} must be started as the root user.");
         process::exit(1);
     }
-    let user = CONFIG.getpwnam()?;
-    let group = CONFIG.getgrnam()?;
+    let cfg = agis::load_config();
+    let user = cfg.getpwnam()?;
+    let group = cfg.getgrnam()?;
 
     let _msg = "Starting up thread pool".to_string().log();
-    let threads = NonZeroUsize::new(CONFIG.threads).unwrap();
+    let threads = NonZeroUsize::new(cfg.threads).unwrap();
     let pool = Arc::new(Mutex::new(agis::ThreadPool::new(threads)));
-    let listener = TcpListener::bind(format!("{}:{}", CONFIG.address.ip, CONFIG.address.port))?;
+    let listener = TcpListener::bind(format!("{}:{}", cfg.address.ip, cfg.address.port))?;
     let _msg = format!(
         "Binding to address {} on port {}",
-        CONFIG.address.ip, CONFIG.address.port
+        cfg.address.ip, cfg.address.port
     )
     .log();
     // We can optionally start up a second listener, useful if we want to listen
     // on a second interface *or* listen to ipv4 and ipv6 simultaneously
-    let listener1 = match CONFIG.address1 {
+    let listener1 = match cfg.address1 {
         Some(ref a) => {
             let l = TcpListener::bind(format!("{}:{}", a.ip, a.port))?;
             let _msg = format!("Binding to address {} on port {}", a.ip, a.port).log();

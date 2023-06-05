@@ -5,7 +5,6 @@ use {
         config::Directive,
         error::{RequestError, ServerError},
         request::Request,
-        CONFIG,
     },
     cgi::Cgi,
     std::{
@@ -100,7 +99,8 @@ impl From<PathBuf> for Response {
 
 impl From<Request> for Response {
     fn from(request: Request) -> Self {
-        let Some(server) = CONFIG.vhosts.get(&request.host) else {
+        let cfg = crate::load_config();
+        let Some(server) = cfg.vhosts.get(&request.host) else {
             return ServerError::NotFound.into();
         };
         for (dir, directive) in &server.directories {
