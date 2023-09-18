@@ -181,6 +181,11 @@ impl From<Request> for Response {
         }
         let mimetype = match path.extension() {
             Some(ext) if ext == "gmi" => "text/gemini",
+            Some(ext) if ext == "png" => "image/png",
+            Some(ext) if ext == "jpg" => "image/jpeg",
+            Some(ext) if ext == "jpeg" => "image/jpeg",
+            Some(ext) if ext == "gif" => "image/gif",
+            Some(ext) if ext == "svg" => "image/svg+xml",
             _ => tree_magic_mini::from_u8(&body),
         }
         .to_string();
