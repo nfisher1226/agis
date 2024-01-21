@@ -3,7 +3,7 @@
 use {
     agis::log::{Log, LogError},
     std::{
-        env,
+        env, io,
         net::TcpListener,
         num::NonZeroUsize,
         process,
@@ -12,7 +12,7 @@ use {
     },
 };
 
-fn main() -> std::io::Result<()> {
+fn main() -> io::Result<()> {
     // Make sure we're starting as root
     let uid = unsafe { libc::getuid() };
     if uid != 0 {

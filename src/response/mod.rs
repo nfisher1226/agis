@@ -10,7 +10,7 @@ use {
     std::{
         fmt::{self, Write},
         fs::{self, File},
-        io::{self, BufReader, ErrorKind, Read},
+        io::{BufReader, Error as IoError, Read},
         path::PathBuf,
     },
 };
@@ -82,11 +82,11 @@ impl From<PathBuf> for Response {
             let entry = if let Some(e) = entry.file_name().to_str() {
                 e.to_string()
             } else {
-                let err = io::Error::new(ErrorKind::Other, "Invalid pathname");
+                let err = IoError::other("Invalid pathname");
                 return Self::ServerError(err.into());
             };
             if let Err(e) = writeln!(body, "=> {entry}") {
-                let err = io::Error::new(ErrorKind::Other, e);
+                let err = IoError::other(e);
                 return Self::ServerError(err.into());
             }
         }
@@ -153,7 +153,7 @@ impl From<Request> for Response {
         let request_base = match PathBuf::from(&request.path).strip_prefix("/") {
             Ok(p) => p.to_path_buf(),
             Err(e) => {
-                let err = io::Error::new(ErrorKind::Other, e);
+                let err = IoError::other(e);
                 return Self::ServerError(err.into());
             }
         };
