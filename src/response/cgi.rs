@@ -22,7 +22,7 @@
 use super::Response;
 use {
     super::Request,
-    crate::{config::Server, response::ServerError, CONFIG},
+    crate::{config::Server, response::ServerError},
     osrand::{Flags, RandomString},
     std::{
         fs::File,
@@ -51,6 +51,7 @@ impl Cgi {
     /// # Errors
     /// Returns a `ServerError` if unable to get the CGI path
     pub fn new(request: Request, server: &Server, dir: &Path) -> Result<Self, ServerError> {
+        let cfg = crate::load_config();
         let base = match PathBuf::from(&request.path).strip_prefix(dir) {
             Ok(b) => b.to_path_buf(),
             Err(_) => return Err(ServerError::CgiError),
@@ -83,7 +84,7 @@ impl Cgi {
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{}", script_name.display()),
             server_name: server.name.clone(),
-            server_port: CONFIG.address.port.clone(),
+            server_port: cfg.address.port.clone(),
             server_software,
             body: request.content,
         })
@@ -99,6 +100,7 @@ impl Cgi {
         server: &Server,
         script_alias: &Path,
     ) -> Result<Self, ServerError> {
+        let cfg = crate::load_config();
         let script_name = match script_alias.file_name() {
             Some(name) => name.to_string_lossy(),
             None => return Err(ServerError::CgiError),
@@ -121,7 +123,7 @@ impl Cgi {
             script_filename: format!("{}", script_filename.display()),
             script_name: format!("{script_name}"),
             server_name: server.name.clone(),
-            server_port: CONFIG.address.port.clone(),
+            server_port: cfg.address.port.clone(),
             server_software,
             body: request.content,
         })

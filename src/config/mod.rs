@@ -1,14 +1,7 @@
 #![allow(clippy::unsafe_derive_deserialize, clippy::module_name_repetitions)]
 use {
     serde::Deserialize,
-    std::{
-        collections::HashMap,
-        ffi::CString,
-        fs,
-        io::{Error, ErrorKind},
-        path::PathBuf,
-        process,
-    },
+    std::{collections::HashMap, ffi::CString, fs, io::Error as IoError, path::PathBuf, process},
 };
 
 /// A name based Virtual Host
@@ -75,7 +68,7 @@ impl Config {
     /// Returns an `io::Error` if the file cannot be read or if it is invalid
     /// # Panics
     /// Will panic if unable to get the command line options
-    pub fn load() -> Result<Self, Error> {
+    pub fn load() -> Result<Self, IoError> {
         let opts = match crate::options() {
             Ok(m) => m,
             Err(e) => {
@@ -97,7 +90,7 @@ impl Config {
                     e.position.line,
                     e.position.col,
                 );
-                Err(Error::new(ErrorKind::Other, err))
+                Err(IoError::other(err))
             }
         }
     }
@@ -105,12 +98,12 @@ impl Config {
     /// Gets the `libc::passwd` for the user that the server will run as
     /// # Errors
     /// Returns an `io::Error` if unable to create a `CString`
-    pub fn getpwnam(&self) -> Result<*mut libc::passwd, Error> {
+    pub fn getpwnam(&self) -> Result<*mut libc::passwd, IoError> {
         let user = CString::new(self.user.as_bytes())?;
         let uid = unsafe { libc::getpwnam(user.as_ptr()) };
         if uid.is_null() {
             eprintln!("Unable to getpwnam of user: {}", &self.user);
-            return Err(Error::last_os_error());
+            return Err(IoError::last_os_error());
         }
         Ok(uid)
     }
@@ -118,12 +111,12 @@ impl Config {
     /// Gets the `libc::group` for the group that the server will run as
     /// # Errors
     /// Returns an `io::Error` if unable to create a `CString`
-    pub fn getgrnam(&self) -> Result<*mut libc::group, Error> {
+    pub fn getgrnam(&self) -> Result<*mut libc::group, IoError> {
         let group = CString::new(self.group.as_bytes())?;
         let gid = unsafe { libc::getgrnam(group.as_ptr()) };
         if gid.is_null() {
             eprintln!("Unable to get getgrnam of group: {}", &self.group);
-            return Err(Error::last_os_error());
+            return Err(IoError::last_os_error());
         }
         Ok(gid)
     }

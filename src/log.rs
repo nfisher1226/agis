@@ -1,6 +1,5 @@
 #![allow(clippy::module_name_repetitions)]
 use {
-    crate::CONFIG,
     epoch::DateTime,
     std::{
         fmt::Display,
@@ -36,8 +35,9 @@ impl Log for std::string::String {
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt = DateTime::now().unwrap();
+        let cfg = crate::load_config();
         let msg = format!("{dt} {self};\n");
-        match CONFIG.access_log.as_ref() {
+        match cfg.access_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
                     let mut writer = BufWriter::new(fd);
@@ -59,6 +59,7 @@ impl Log for crate::Response {
 
     fn log(&self) -> Result<(), Self::Error> {
         let dt = DateTime::now().unwrap();
+        let cfg = crate::load_config();
         match self {
             Self::Success {
                 mimetype: _,
@@ -66,7 +67,7 @@ impl Log for crate::Response {
             }
             | Self::Redirect(_) => {
                 let msg = format!("{dt} {self};\n");
-                match CONFIG.access_log.as_ref() {
+                match cfg.access_log.as_ref() {
                     Some(log) => match OpenOptions::new().append(true).open(log) {
                         Ok(fd) => {
                             let mut writer = BufWriter::new(fd);
@@ -94,8 +95,9 @@ where
 
     fn log_err(&self) -> Result<(), Self::Error> {
         let dt = DateTime::now().unwrap();
+        let cfg = crate::load_config();
         let msg = format!("{dt} {self}\n");
-        match CONFIG.error_log.as_ref() {
+        match cfg.error_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
                 Ok(fd) => {
                     let mut writer = BufWriter::new(fd);
