@@ -23,6 +23,7 @@ use super::Response;
 use {
     super::Request,
     crate::{config::Server, response::ServerError, CONFIG},
+    osrand::{Flags, RandomString},
     std::{
         fs::File,
         io::{self, Write},
@@ -132,10 +133,18 @@ impl Cgi {
     /// - Unable to create the tempdir or tempfile
     /// - The cgi script returns an error
     pub fn run(&self) -> io::Result<Output> {
-        let dir = tempfile::tempdir()?;
+        let mut rsg = RandomString::new(&[
+            Flags::Lowercase,
+            Flags::Uppercase,
+            Flags::Numeric,
+            Flags::Special,
+        ])?;
+        let p = rsg.gen(8).map_err(|e| io::Error::other(e.to_string()))?;
+        let mut dir = PathBuf::from("/tmp");
+        dir.push(&p);
         let tmpfile = match self.body.as_ref() {
             Some(body) => {
-                let path = dir.path().join("body");
+                let path = dir.join("body");
                 let mut fd = File::create(&path)?;
                 fd.write_all(body)?;
                 path.display().to_string()

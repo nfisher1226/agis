@@ -1,7 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 use {
     crate::CONFIG,
-    chrono::Utc,
+    epoch::DateTime,
     std::{
         fmt::Display,
         fs::OpenOptions,
@@ -35,7 +35,7 @@ impl Log for std::string::String {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
-        let dt = Utc::now().to_rfc3339();
+        let dt = DateTime::now().unwrap();
         let msg = format!("{dt} {self};\n");
         match CONFIG.access_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
@@ -58,7 +58,7 @@ impl Log for crate::Response {
     type Error = io::Error;
 
     fn log(&self) -> Result<(), Self::Error> {
-        let dt = Utc::now().to_rfc3339();
+        let dt = DateTime::now().unwrap();
         match self {
             Self::Success {
                 mimetype: _,
@@ -93,7 +93,7 @@ where
     type Error = io::Error;
 
     fn log_err(&self) -> Result<(), Self::Error> {
-        let dt = Utc::now().to_rfc3339();
+        let dt = DateTime::now().unwrap();
         let msg = format!("{dt} {self}\n");
         match CONFIG.error_log.as_ref() {
             Some(log) => match OpenOptions::new().append(true).open(log) {
