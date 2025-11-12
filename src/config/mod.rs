@@ -85,10 +85,12 @@ impl Config {
             Ok(c) => Ok(c),
             Err(e) => {
                 let err = format!(
-                    "Error encoding config:\n  code: {:?}\n  position:\n    line: {}\n    column: {}",
+                    "Error encoding config:\n  code: {:?}\n  start position:\n    line: {}\n    column: {}\n  end position:\n    line: {}\n    column: {}\n",
                     e.code,
-                    e.position.line,
-                    e.position.col,
+                    e.span.start.line,
+                    e.span.start.col,
+                    e.span.end.line,
+                    e.span.end.col,
                 );
                 Err(IoError::other(err))
             }

@@ -12,12 +12,12 @@ license = "GPL-3.0-or-later"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-epoch = { git = "https://git.hitchhiker-linux.org/jeang3nie/epoch-rs.git" }
+epoch = { git = "https://codeberg.org/jeang3nie/hhl_epoch_rs.git" }
 getopts = "0.2"
 libc = "0.2"
 once_cell = "1.15"
 osrand = "0.2.1"
-ron = "0.8"
+ron = "0.12"
 tree_magic_mini = "3.0"
 urlencoding = "2.1"
 
